@@ -1,9 +1,11 @@
 #include <CrossFire.hpp>
-#include <iostream>
 
-auto main() -> CrossFire::i32
+using namespace CrossFire;
+
+auto main() -> i32
 {
-	std::cout << "Hello, world!" << std::endl;
+	auto file = File::open("test.txt", "w");
+	file->write(Slice<u8>{(u8*)"Hello, World!", 13});
 
 	return 0;
 }
