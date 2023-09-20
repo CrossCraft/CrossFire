@@ -4,8 +4,11 @@ using namespace CrossFire;
 
 auto main() -> i32
 {
-	auto file = File::open("test.txt", "w");
-	file->write(Slice<u8>{(u8*)"Hello, World!", 13});
+	auto file = FileFactory::get_stdout();
+
+	for(auto i = 0; i < 10; i++) {
+		file.write(Slice<u8>::from_string("Hello, world!\n"));
+	}
 
 	return 0;
 }

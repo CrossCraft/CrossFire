@@ -5,40 +5,41 @@
 namespace CrossFire {
 
 /**
- * @brief IFile is an interface for file objects.
+ * @brief File is an interface for file objects.
  */
-class IFile {
+class File {
     public:
-    	IFile(const char* filename, const char* mode) : filename(filename), mode(mode) {};
-	virtual ~IFile() = default;
+	File() = default;
+	explicit File(FILE* file);
+	File(const char* filename, const char* mode);
+	virtual ~File() = default;
 
-	virtual auto read(Slice<u8>& buffer) -> usize = 0;
-	virtual auto write(const Slice<u8>& buffer) -> usize = 0;
-	virtual auto size() -> isize = 0;
-	virtual auto flush() -> void = 0;
-	virtual auto close() -> void = 0;
+	virtual auto read(Slice<u8>& buffer) -> usize;
+	virtual auto write(const Slice<u8>& buffer) -> usize;
+	virtual auto size() -> isize;
+	virtual auto flush() -> void;
+	virtual auto close() -> void;
 
     protected:
-	const char* filename;
-	const char* mode;
+	void* ctx = nullptr;
 };
 
 /**
- * @brief File is a factory class for IFile objects.
+ * @brief File is a factory class for File objects.
  */
-class File {
+class FileFactory {
     public:
 	/**
 	 * @brief open opens a file.
 	 * @param filename Filename to open.
 	 * @param mode Mode to open the file in.
-	 * @return IFile object.
+	 * @return File object.
 	 * @throws std::runtime_error if the file could not be opened.
 	 */
-	static auto open(const char* filename, const char* mode) -> IFile*;
+	static auto open(const char* filename, const char* mode) -> File;
 
-	static auto get_stdout() -> IFile*;
-	static auto get_stderr() -> IFile*;
+	static auto get_stdout() -> File;
+	static auto get_stderr() -> File;
 };
 
 }
