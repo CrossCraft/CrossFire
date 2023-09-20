@@ -1,14 +1,26 @@
 #include <CrossFire.hpp>
-
+#include <iostream>
 using namespace CrossFire;
 
 auto main() -> i32
 {
-	auto file = FileFactory::get_stdout();
+	auto file = FileFactory::open("test.txt", "w");
+	auto writer = file.writer();
 
 	for(auto i = 0; i < 10; i++) {
-		file.write(Slice<u8>::from_string("Hello, world!\n"));
+		(void)writer.raw_write(Slice<u8>::from_string("Hello World!\n"));
 	}
+	file.close();
+
+	file = FileFactory::open("test.txt", "r");
+	auto reader = file.reader();
+	auto buffer = Slice<u8>(new u8[1024], 1024);
+
+	auto read = reader.raw_read(buffer);
+	std::cout << "Read " << read << " bytes." << std::endl;
+
+	std::cout << "Contents:" << std::endl;
+	std::cout << buffer.as_bytes().ptr << std::endl;
 
 	return 0;
 }

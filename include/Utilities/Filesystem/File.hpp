@@ -1,5 +1,6 @@
 #pragma once
 #include "../Types.hpp"
+#include "../IO.hpp"
 #include <variant>
 
 namespace CrossFire {
@@ -19,6 +20,24 @@ class File {
 	virtual auto size() -> isize;
 	virtual auto flush() -> void;
 	virtual auto close() -> void;
+
+	auto reader() -> Reader {
+		return Reader {
+			.context = this,
+			.readFn = [](void* context, Slice<u8>& buffer) -> usize {
+				return static_cast<File*>(context)->read(buffer);
+			}
+		};
+	}
+
+	auto writer() -> Writer {
+		return Writer {
+			.context = this,
+			.writeFn = [](void* context, const Slice<u8>& buffer) -> usize {
+				return static_cast<File*>(context)->write(buffer);
+			}
+		};
+	}
 
     protected:
 	void* ctx = nullptr;
