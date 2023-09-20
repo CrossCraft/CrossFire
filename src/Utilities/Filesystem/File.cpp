@@ -1,20 +1,59 @@
 #include <Utilities/Filesystem/File.hpp>
-#include "CFile.hpp"
 #include <cstdio>
 
 namespace CrossFire {
 
-auto File::open(const char* filename, const char* mode) -> IFile*
+
+File::File(const char* filename, const char* mode) {
+	ctx = fopen(filename, mode);
+
+	if (ctx == nullptr) {
+		throw std::runtime_error("Failed to open file.");
+	}
+}
+
+File::File(FILE* file) {
+	ctx = file;
+}
+
+auto File::read(Slice<u8>& buffer) -> usize {
+	return fread(buffer.ptr, 1, buffer.len, static_cast<FILE*>(ctx));
+}
+
+auto File::write(const Slice<u8>& buffer) -> usize {
+	return fwrite(buffer.ptr, 1, buffer.len, static_cast<FILE*>(ctx));
+}
+
+auto File::size() -> isize {
+	i32 pos = ftell(static_cast<FILE*>(ctx));
+	fseek(static_cast<FILE*>(ctx), 0, SEEK_END);
+	isize size = ftell(static_cast<FILE*>(ctx));
+	fseek(static_cast<FILE*>(ctx), pos, SEEK_SET);
+	return size;
+}
+
+auto File::flush() -> void {
+	fflush(static_cast<FILE*>(ctx));
+}
+
+auto File::close() -> void {
+	if (static_cast<FILE*>(ctx) != nullptr) {
+		fclose(static_cast<FILE*>(ctx));
+		ctx = nullptr;
+	}
+}
+
+auto FileFactory::open(const char* filename, const char* mode) -> File
 {
-	return new CFile(filename, mode);
+	return {filename, mode};
 }
 
-auto File::get_stdout() -> IFile* {
-	return new CFile(stdout);
+auto FileFactory::get_stdout() -> File {
+	return File(stdout);
 }
 
-auto File::get_stderr() -> IFile* {
-	return new CFile(stderr);
+auto FileFactory::get_stderr() -> File {
+	return File(stderr);
 }
 
 }
