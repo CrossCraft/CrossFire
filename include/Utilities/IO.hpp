@@ -12,18 +12,18 @@ struct Reader {
     ReadFn readFn;
 
     [[nodiscard]]
-    auto raw_read(Slice<u8>& buffer) const -> usize {
+    inline auto raw_read(Slice<u8>& buffer) const -> usize {
 	return readFn(context, buffer);
     }
 
     template<typename T>
-    auto read(T& value) -> usize {
+    inline auto read(T& value) -> usize {
 	Slice<u8> buffer = Slice<u8>((u8*)&value, sizeof(T));
 	return raw_read(buffer);
     }
 
     template<typename T>
-    auto readForeign(T& value) -> usize {
+    inline auto readForeign(T& value) -> usize {
 	Slice<u8> buffer = Slice<u8>((u8*)&value, sizeof(T));
 	usize read = raw_read(buffer);
 
@@ -42,24 +42,18 @@ struct Writer {
     WriteFn writeFn;
 
     [[nodiscard]]
-    auto raw_write(const Slice<u8>& buffer) const -> usize {
+    inline auto raw_write(const Slice<u8>& buffer) const -> usize {
 	return writeFn(context, buffer);
     }
 
     template<typename T>
-    auto write(const T& value) -> usize {
+    inline auto write(const T& value) -> usize {
 	Slice<u8> buffer = Slice<u8>((u8*)&value, sizeof(T));
 	return raw_write(buffer);
     }
 
-    template<>
-    auto write(const std::string& value) -> usize {
-	Slice<u8> buffer = Slice<u8>((u8*)value.c_str(), value.length());
-	return raw_write(buffer);
-    }
-
     template<typename T>
-    auto writeForeign(const T& value) -> usize {
+    inline auto writeForeign(const T& value) -> usize {
 	T temp = value;
 	Slice<u8> buffer = Slice<u8>((u8*)&temp, sizeof(T));
 
@@ -72,5 +66,11 @@ struct Writer {
 	return raw_write(buffer);
     }
 };
+
+template<>
+inline auto Writer::write(const std::string& value) -> usize {
+    Slice<u8> buffer = Slice<u8>((u8*)value.c_str(), value.length());
+    return raw_write(buffer);
+}
 
 }
