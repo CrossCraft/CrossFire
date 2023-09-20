@@ -5,11 +5,12 @@ using namespace CrossFire;
 auto main() -> i32
 {
 	auto file = FileFactory::open("test.txt", "w");
-	auto writer = file.writer();
+	auto writer = BufferedWriter(file.writer());
 
 	for(auto i = 0; i < 10; i++) {
 		(void)writer.raw_write(Slice<u8>::from_string("Hello World!\n"));
 	}
+	writer.flush();
 	file.close();
 
 	file = FileFactory::open("test.txt", "r");
