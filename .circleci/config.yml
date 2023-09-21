@@ -1,7 +1,7 @@
 version: 2.1
 
 jobs:
-  build-linux:
+  build-linux-gcc:
     docker:
       - image: cimg/base:2023.03
 
@@ -16,8 +16,24 @@ jobs:
       - run:
           name: "Build"
           command: cd build && cmake .. && make
+  build-linux-clang:
+    docker:
+      - image: cimg/base:2023.03
+
+    steps:
+      - checkout
+      - run:
+          name: "Install Cmake"
+          command: sudo apt-get update && sudo apt-get install -y cmake
+      - run:
+          name: "Create build directory"
+          command: mkdir build
+      - run:
+          name: "Build"
+          command: cd build && cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && make
 
 workflows:
   build-linux-workflow:
     jobs:
-      - build-linux
+      - build-linux-gcc
+      - build-linux-clang
