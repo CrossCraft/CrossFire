@@ -48,12 +48,14 @@ auto FileFactory::open(const char* filename, const char* mode) -> File
 	return {filename, mode};
 }
 
-auto FileFactory::get_stdout() -> File {
-	return File(stdout);
+auto FileFactory::get_stdout() -> File& {
+	static auto stdout_file = File(stdout);
+	return stdout_file;
 }
 
-auto FileFactory::get_stderr() -> File {
-	return File(stderr);
+auto FileFactory::get_stderr() -> File& {
+	static auto stderr_file = File(stderr);
+	return stderr_file;
 }
 
 }

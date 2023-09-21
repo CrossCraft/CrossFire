@@ -23,18 +23,23 @@ typedef double f64;
 
 typedef size_t usize;
 typedef ptrdiff_t isize;
+typedef const char* cstring;
 
 template <typename T> struct Slice {
-	Slice(T *ptr, usize len) : ptr(ptr), len(len) {}
-
-	static auto from_string(const char *str) -> Slice<u8>
+	Slice(T *ptr, usize len)
+		: ptr(ptr)
+		, len(len)
 	{
-		return Slice<u8>{(u8*)str, strlen(str)};
+	}
+
+	static auto from_string(cstring str) -> Slice<u8>
+	{
+		return Slice<u8>{ (u8 *)str, strlen(str) };
 	}
 
 	auto as_bytes() -> Slice<const u8>
 	{
-		return Slice<const u8>{(const u8*)ptr, len};
+		return Slice<const u8>{ (const u8 *)ptr, len };
 	}
 
 	T *ptr;

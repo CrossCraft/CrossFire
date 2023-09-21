@@ -3,7 +3,8 @@
 #include "../IO.hpp"
 #include <variant>
 
-namespace CrossFire {
+namespace CrossFire
+{
 
 /**
  * @brief File is an interface for file objects.
@@ -11,36 +12,35 @@ namespace CrossFire {
 class File {
     public:
 	File() = default;
-	explicit File(FILE* file);
-	File(const char* filename, const char* mode);
+	explicit File(FILE *file);
+	File(const char *filename, const char *mode);
 	virtual ~File() = default;
 
-	virtual auto read(Slice<u8>& buffer) -> usize;
-	virtual auto write(const Slice<u8>& buffer) -> usize;
+	virtual auto read(Slice<u8> &buffer) -> usize;
+	virtual auto write(const Slice<u8> &buffer) -> usize;
 	virtual auto size() -> isize;
 	virtual auto flush() -> void;
 	virtual auto close() -> void;
 
-	auto reader() -> Reader {
-		return Reader {
-			.context = this,
-			.readFn = [](void* context, Slice<u8>& buffer) -> usize {
-				return static_cast<File*>(context)->read(buffer);
-			}
+	auto reader() -> Reader
+	{
+		auto read = [](void *context, Slice<u8> &buffer) -> usize {
+			return static_cast<File *>(context)->read(buffer);
 		};
+
+		return { this, read };
 	}
 
-	auto writer() -> Writer {
-		return Writer {
-			.context = this,
-			.writeFn = [](void* context, const Slice<u8>& buffer) -> usize {
-				return static_cast<File*>(context)->write(buffer);
-			}
+	auto writer() -> Writer
+	{
+		auto write = [](void *context, const Slice<u8> &buffer) -> usize {
+			return static_cast<File *>(context)->write(buffer);
 		};
+		return { this, write };
 	}
 
     protected:
-	void* ctx = nullptr;
+	void *ctx = nullptr;
 };
 
 /**
@@ -55,10 +55,10 @@ class FileFactory {
 	 * @return File object.
 	 * @throws std::runtime_error if the file could not be opened.
 	 */
-	static auto open(const char* filename, const char* mode) -> File;
+	static auto open(const char *filename, const char *mode) -> File;
 
-	static auto get_stdout() -> File;
-	static auto get_stderr() -> File;
+	static auto get_stdout() -> File &;
+	static auto get_stderr() -> File &;
 };
 
 }
