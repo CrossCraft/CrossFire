@@ -14,6 +14,7 @@ auto cf_assert(bool condition, const char *message) -> void
         Logger::get_stderr().err(message);
 
     Logger::get_stderr().err("Assertion failed!");
+    Logger::get_stderr().flush();
 
     abort();
 #else

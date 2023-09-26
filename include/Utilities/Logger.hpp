@@ -37,7 +37,7 @@ constexpr const char *timestamp_format = "%02d-%02d-%04d|%02d:%02d:%02d";
 
 class Logger final {
     LogLevel level;
-    Writer writer;
+    BufferedWriter& writer;
     bool timestamp = false;
     const char *name = nullptr;
     SpinLock lock;
@@ -81,15 +81,19 @@ class Logger final {
     }
 
 public:
-    Logger()
-        : level(LogLevel::Info)
-        , writer(FileFactory::get_stdout().writer())
+    explicit Logger(BufferedWriter& writer, LogLevel level = LogLevel::Info)
+        : level(level)
+        , writer(writer)
     {
     }
-    explicit Logger(Writer writer, LogLevel level = LogLevel::Info)
-        : level(level)
-        , writer(std::move(writer))
+
+    ~Logger() {
+        flush();
+    }
+
+    inline auto flush() -> void
     {
+        writer.flush();
     }
 
     inline auto set_level(LogLevel lvl) -> void
@@ -109,13 +113,15 @@ public:
 
     inline static auto get_stdout() -> Logger &
     {
-        static auto stdout_logger = Logger(FileFactory::get_stdout().writer());
+        static auto stdout_bwriter = BufferedWriter(FileFactory::get_stdout().writer());
+        static auto stdout_logger = Logger(stdout_bwriter);
         return stdout_logger;
     }
 
     inline static auto get_stderr() -> Logger &
     {
-        static auto stderr_logger = Logger(FileFactory::get_stderr().writer());
+        static auto stderr_bwriter = BufferedWriter(FileFactory::get_stderr().writer());
+        static auto stderr_logger = Logger(stderr_bwriter);
         return stderr_logger;
     }
 
