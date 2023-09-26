@@ -4,6 +4,23 @@
 namespace CrossFire
 {
 
+template <typename T> class LockGuard
+{
+    public:
+	explicit LockGuard(T &lock)
+		: lock(lock)
+	{
+		lock.lock();
+	}
+	~LockGuard()
+	{
+		lock.unlock();
+	}
+
+    private:
+	T &lock;
+};
+
 class SpinLock
 {
     public:

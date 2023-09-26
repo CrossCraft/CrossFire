@@ -5,6 +5,7 @@
 #include "Types.hpp"
 #include "IO.hpp"
 #include "Filesystem/File.hpp"
+#include "Threading/SpinLock.hpp"
 
 namespace CrossFire
 {
@@ -34,14 +35,17 @@ inline auto get_level_string(const LogLevel &lvl) -> const char*
 
 constexpr const char* timestamp_format = "%02d-%02d-%04d|%02d:%02d:%02d";
 
-class Logger {
+class Logger final {
 	LogLevel level;
 	Writer writer;
 	bool timestamp = false;
 	const char* name = nullptr;
+	SpinLock lock;
 
 	inline auto log(LogLevel lvl, const Slice<u8> &buffer) -> void
 	{
+		LockGuard<SpinLock> guard(lock);
+
 		if (lvl >= this->level) {
 			if(timestamp) {
 				(void)writer.raw_write(Slice<u8>::from_string("["));
