@@ -38,7 +38,7 @@ class SpinLock
 	}
 
     private:
-	std::atomic_flag flag = ATOMIC_FLAG_INIT;
+	std::atomic_flag flag;
 };
 
 }
