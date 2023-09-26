@@ -9,13 +9,13 @@ jobs:
       - checkout
       - run:
           name: "Install Cmake"
-          command: sudo apt-get update && sudo apt-get install -y cmake
+          command: sudo apt-get update && sudo apt-get install -y cmake ninja-build
       - run:
           name: "Create build directory"
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake .. && make
+          command: cd build && cmake -GNinja .. && ninja
   build-linux-clang:
     docker:
       - image: cimg/base:2023.03
@@ -24,13 +24,13 @@ jobs:
       - checkout
       - run:
           name: "Install Cmake"
-          command: sudo apt-get update && sudo apt-get install -y cmake clang
+          command: sudo apt-get update && sudo apt-get install -y cmake clang ninja-build
       - run:
           name: "Create build directory"
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && make
+          command: cd build && cmake -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
 
 workflows:
   build-linux-workflow:
