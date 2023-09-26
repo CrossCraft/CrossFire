@@ -8,6 +8,8 @@
 namespace CrossFire
 {
 
+inline auto cf_assert(bool condition, const char *message = nullptr) -> void;
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -47,12 +49,7 @@ template <typename T> struct Slice {
 
     T &operator[](usize index)
     {
-#ifdef NDEBUG
-        if (index >= len) {
-            throw std::out_of_range("Slice index out of range");
-        }
-#endif
-
+        cf_assert(index < len, "Slice index out of range");
         return ptr[index];
     }
 };
