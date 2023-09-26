@@ -7,5 +7,7 @@ auto main() -> i32
     log.set_timestamp(true);
     log.set_name("App");
     log.info("Hello, world!\n");
+
+    cf_assert(false, "This is a test assertion.");
     return EXIT_SUCCESS;
 }

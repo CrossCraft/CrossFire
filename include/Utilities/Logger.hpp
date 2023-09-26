@@ -76,6 +76,7 @@ class Logger final {
             (void)writer.write(get_level_string(lvl));
             (void)writer.raw_write(Slice<u8>::from_string("]: "));
             (void)writer.raw_write(buffer);
+            (void)writer.raw_write(Slice<u8>::from_string("\n"));
         }
     }
 
