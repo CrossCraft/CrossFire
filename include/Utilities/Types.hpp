@@ -8,7 +8,7 @@
 namespace CrossFire
 {
 
-inline auto cf_assert(bool condition, const char *message = nullptr) -> void;
+auto cf_assert(bool condition, const char *message = nullptr) -> void;
 
 typedef uint8_t u8;
 typedef uint16_t u16;

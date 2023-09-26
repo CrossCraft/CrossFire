@@ -1,10 +1,10 @@
-#pragma once
-#include "Logger.hpp"
+#include <Utilities/Types.hpp>
+#include <Utilities/Logger.hpp>
 
 namespace CrossFire
 {
 
-inline auto cf_assert(bool condition, const char *message = nullptr) -> void
+auto cf_assert(bool condition, const char *message) -> void
 {
 #ifdef NDEBUG
     if (condition)
