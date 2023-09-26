@@ -1,6 +1,7 @@
 #pragma once
 #include "../Types.hpp"
 #include "../IO.hpp"
+#include <cassert>
 #include <variant>
 
 namespace CrossFire
@@ -9,23 +10,37 @@ namespace CrossFire
 /**
  * @brief File is an interface for file objects.
  */
-class File {
+class FileBase {
     public:
-	File() = default;
-	explicit File(FILE *file);
-	File(const char *filename, const char *mode);
-	virtual ~File() = default;
+	FileBase(const char *filename, const char *mode) { (void)filename; (void)mode; };
+	virtual ~FileBase() = default;
 
-	virtual auto read(Slice<u8> &buffer) -> usize;
-	virtual auto write(const Slice<u8> &buffer) -> usize;
-	virtual auto size() -> isize;
-	virtual auto flush() -> void;
-	virtual auto close() -> void;
+	virtual auto read(Slice<u8> &buffer) -> usize {
+		(void)buffer;
+		assert(false && "Unimplemented base function called.");
+		return -1;
+	}
+	virtual auto write(const Slice<u8> &buffer) -> usize {
+		(void)buffer;
+		assert(false && "Unimplemented base function called.");
+		return -1;
+	}
+	virtual auto size() -> isize {
+		assert(false && "Unimplemented base function called.");
+		return -1;
+	}
+
+	virtual auto flush() -> void {
+		assert(false && "Unimplemented base function called.");
+	}
+	virtual auto close() -> void {
+		assert(false && "Unimplemented base function called.");
+	}
 
 	auto reader() -> Reader
 	{
 		auto read = [](void *context, Slice<u8> &buffer) -> usize {
-			return static_cast<File *>(context)->read(buffer);
+			return static_cast<FileBase *>(context)->read(buffer);
 		};
 
 		return { this, read };
@@ -34,13 +49,13 @@ class File {
 	auto writer() -> Writer
 	{
 		auto write = [](void *context, const Slice<u8> &buffer) -> usize {
-			return static_cast<File *>(context)->write(buffer);
+			return static_cast<FileBase *>(context)->write(buffer);
 		};
 		return { this, write };
 	}
 
     protected:
-	void *ctx = nullptr;
+	void* ctx = nullptr;
 };
 
 /**
@@ -55,10 +70,10 @@ class FileFactory {
 	 * @return File object.
 	 * @throws std::runtime_error if the file could not be opened.
 	 */
-	static auto open(const char *filename, const char *mode) -> File;
+	static auto open(const char *filename, const char *mode) -> FileBase;
 
-	static auto get_stdout() -> File &;
-	static auto get_stderr() -> File &;
+	static auto get_stdout() -> FileBase &;
+	static auto get_stderr() -> FileBase &;
 };
 
 }

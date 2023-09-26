@@ -1,10 +1,12 @@
-#include <Utilities/Filesystem/File.hpp>
+#include "CFile.hpp"
 #include <cstdio>
 
-namespace CrossFire {
+namespace CrossFire::detail
+{
 
-
-File::File(const char* filename, const char* mode) {
+CFile::CFile(const char *filename, const char *mode)
+	: FileBase(filename, mode)
+{
 	ctx = fopen(filename, mode);
 
 	if (ctx == nullptr) {
@@ -12,49 +14,65 @@ File::File(const char* filename, const char* mode) {
 	}
 }
 
-File::File(FILE* file) {
+CFile::~CFile()
+{
+	close();
+}
+
+CFile::CFile(FILE *file)
+	: FileBase("", "")
+{
 	ctx = file;
 }
 
-auto File::read(Slice<u8>& buffer) -> usize {
-	return fread(buffer.ptr, 1, buffer.len, static_cast<FILE*>(ctx));
+auto CFile::read(Slice<u8> &buffer) -> usize
+{
+	return fread(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
 }
 
-auto File::write(const Slice<u8>& buffer) -> usize {
-	return fwrite(buffer.ptr, 1, buffer.len, static_cast<FILE*>(ctx));
+auto CFile::write(const Slice<u8> &buffer) -> usize
+{
+	return fwrite(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
 }
 
-auto File::size() -> isize {
-	i32 pos = ftell(static_cast<FILE*>(ctx));
-	fseek(static_cast<FILE*>(ctx), 0, SEEK_END);
-	isize size = ftell(static_cast<FILE*>(ctx));
-	fseek(static_cast<FILE*>(ctx), pos, SEEK_SET);
+auto CFile::size() -> isize
+{
+	i32 pos = ftell(static_cast<FILE *>(ctx));
+	fseek(static_cast<FILE *>(ctx), 0, SEEK_END);
+	isize size = ftell(static_cast<FILE *>(ctx));
+	fseek(static_cast<FILE *>(ctx), pos, SEEK_SET);
 	return size;
 }
 
-auto File::flush() -> void {
-	fflush(static_cast<FILE*>(ctx));
+auto CFile::flush() -> void
+{
+	fflush(static_cast<FILE *>(ctx));
 }
 
-auto File::close() -> void {
-	if (static_cast<FILE*>(ctx) != nullptr) {
-		fclose(static_cast<FILE*>(ctx));
+auto CFile::close() -> void
+{
+	if (static_cast<FILE *>(ctx) != nullptr) {
+		fclose(static_cast<FILE *>(ctx));
 		ctx = nullptr;
 	}
 }
 
-auto FileFactory::open(const char* filename, const char* mode) -> File
-{
-	return {filename, mode};
 }
 
-auto FileFactory::get_stdout() -> File& {
-	static auto stdout_file = File(stdout);
+namespace CrossFire {
+
+auto FileFactory::open(const char* filename, const char* mode) -> FileBase
+{
+	return detail::CFile(filename, mode);
+}
+
+auto FileFactory::get_stdout() -> FileBase& {
+	static auto stdout_file = detail::CFile(stdout);
 	return stdout_file;
 }
 
-auto FileFactory::get_stderr() -> File& {
-	static auto stderr_file = File(stderr);
+auto FileFactory::get_stderr() -> FileBase& {
+	static auto stderr_file = detail::CFile(stderr);
 	return stderr_file;
 }
 
