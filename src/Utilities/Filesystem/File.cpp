@@ -5,75 +5,78 @@ namespace CrossFire::detail
 {
 
 CFile::CFile(const char *filename, const char *mode)
-	: FileBase(filename, mode)
+    : FileBase(filename, mode)
 {
-	ctx = fopen(filename, mode);
+    ctx = fopen(filename, mode);
 
-	if (ctx == nullptr) {
-		throw std::runtime_error("Failed to open file.");
-	}
+    if (ctx == nullptr) {
+        throw std::runtime_error("Failed to open file.");
+    }
 }
 
 CFile::~CFile()
 {
-	close();
+    close();
 }
 
 CFile::CFile(FILE *file)
-	: FileBase("", "")
+    : FileBase("", "")
 {
-	ctx = file;
+    ctx = file;
 }
 
 auto CFile::read(Slice<u8> &buffer) -> usize
 {
-	return fread(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
+    return fread(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
 }
 
 auto CFile::write(const Slice<u8> &buffer) -> usize
 {
-	return fwrite(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
+    return fwrite(buffer.ptr, 1, buffer.len, static_cast<FILE *>(ctx));
 }
 
 auto CFile::size() -> isize
 {
-	i32 pos = ftell(static_cast<FILE *>(ctx));
-	fseek(static_cast<FILE *>(ctx), 0, SEEK_END);
-	isize size = ftell(static_cast<FILE *>(ctx));
-	fseek(static_cast<FILE *>(ctx), pos, SEEK_SET);
-	return size;
+    i32 pos = ftell(static_cast<FILE *>(ctx));
+    fseek(static_cast<FILE *>(ctx), 0, SEEK_END);
+    isize size = ftell(static_cast<FILE *>(ctx));
+    fseek(static_cast<FILE *>(ctx), pos, SEEK_SET);
+    return size;
 }
 
 auto CFile::flush() -> void
 {
-	fflush(static_cast<FILE *>(ctx));
+    fflush(static_cast<FILE *>(ctx));
 }
 
 auto CFile::close() -> void
 {
-	if (static_cast<FILE *>(ctx) != nullptr) {
-		fclose(static_cast<FILE *>(ctx));
-		ctx = nullptr;
-	}
+    if (static_cast<FILE *>(ctx) != nullptr) {
+        fclose(static_cast<FILE *>(ctx));
+        ctx = nullptr;
+    }
 }
 
 }
 
-namespace CrossFire {
-
-auto FileFactory::open(const char* filename, const char* mode) -> FileBase
+namespace CrossFire
 {
-	return detail::CFile(filename, mode);
+
+auto FileFactory::open(const char *filename, const char *mode) -> FileBase
+{
+    return detail::CFile(filename, mode);
 }
 
-auto FileFactory::get_stdout() -> FileBase& {
-	static auto stdout_file = detail::CFile(stdout);
-	return stdout_file;
+auto FileFactory::get_stdout() -> FileBase &
+{
+    static auto stdout_file = detail::CFile(stdout);
+    return stdout_file;
 }
 
-auto FileFactory::get_stderr() -> FileBase& {
-	static auto stderr_file = detail::CFile(stderr);
-	return stderr_file;
+auto FileFactory::get_stderr() -> FileBase &
+{
+    static auto stderr_file = detail::CFile(stderr);
+    return stderr_file;
 }
 
 }
