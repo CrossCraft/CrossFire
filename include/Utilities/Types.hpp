@@ -23,38 +23,38 @@ typedef double f64;
 
 typedef size_t usize;
 typedef ptrdiff_t isize;
-typedef const char* cstring;
+typedef const char *cstring;
 
 template <typename T> struct Slice {
-	Slice(T *ptr, usize len)
-		: ptr(ptr)
-		, len(len)
-	{
-	}
+    Slice(T *ptr, usize len)
+        : ptr(ptr)
+        , len(len)
+    {
+    }
 
-	static auto from_string(cstring str) -> Slice<u8>
-	{
-		return Slice<u8>{ (u8 *)str, strlen(str) };
-	}
+    static auto from_string(cstring str) -> Slice<u8>
+    {
+        return Slice<u8>{ (u8 *)str, strlen(str) };
+    }
 
-	auto as_bytes() -> Slice<const u8>
-	{
-		return Slice<const u8>{ (const u8 *)ptr, len };
-	}
+    auto as_bytes() -> Slice<const u8>
+    {
+        return Slice<const u8>{ (const u8 *)ptr, len };
+    }
 
-	T *ptr;
-	usize len;
+    T *ptr;
+    usize len;
 
-	T &operator[](usize index)
-	{
+    T &operator[](usize index)
+    {
 #ifdef NDEBUG
-		if (index >= len) {
-			throw std::out_of_range("Slice index out of range");
-		}
+        if (index >= len) {
+            throw std::out_of_range("Slice index out of range");
+        }
 #endif
 
-		return ptr[index];
-	}
+        return ptr[index];
+    }
 };
 
 }
