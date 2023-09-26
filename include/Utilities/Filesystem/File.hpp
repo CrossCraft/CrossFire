@@ -77,7 +77,6 @@ public:
 	 * @param filename Filename to open.
 	 * @param mode Mode to open the file in.
 	 * @return File object.
-	 * @throws std::runtime_error if the file could not be opened.
 	 */
     static auto open(const char *filename, const char *mode) -> FileBase;
 
