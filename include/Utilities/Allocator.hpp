@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "Utilities/Types.hpp"
 
 namespace CrossFire
@@ -7,6 +8,7 @@ namespace CrossFire
 enum class AllocationError {
     OutOfMemory,
     ReallocFailed,
+    InvalidSize,
 };
 
 struct Allocator {
@@ -156,5 +158,38 @@ public:
         return peak_usage;
     }
 };
+
+/**
+ * @brief Named after the Double Balanced Binary Search Tree (DBBST) data structure.
+ */
+class GPAllocator : public Allocator {
+    struct Allocation {
+        usize base;
+        usize size;
+
+        Allocation(usize base, usize size)
+            : base(base)
+            , size(size)
+        {
+        }
+    };
+
+    std::multimap<usize, Allocation> free_map;
+    std::map<usize, Allocation> reserved_map;
+    Slice<u8> memory;
+
+    Allocator &backing_allocator;
+public:
+    explicit GPAllocator(usize size, Allocator &allocator = c_allocator);
+    ~GPAllocator() override;
+
+    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+        -> Result<Slice<u8>, AllocationError> override;
+    auto deallocate(Slice<u8> ptr) -> void override;
+    auto reallocate(Slice<u8> ptr, usize size,
+                    usize alignment = alignof(std::max_align_t))
+        -> Result<Slice<u8>, AllocationError> override;
+};
+
 
 }

@@ -5,8 +5,9 @@ using namespace CrossFire;
 auto main() -> i32
 {
     Timer timer;
-    auto gpa = DebugAllocator();
-    Allocator &allocator = gpa;
+    auto gpa = GPAllocator(1024 * 1024);
+    auto dbg = DebugAllocator(gpa);
+    Allocator &allocator = dbg;
 
     auto result = allocator.allocate(1024);
     if (result.is_err())
@@ -19,27 +20,27 @@ auto main() -> i32
 
     auto &log = Logger::get_stdout();
 
-    log.info(("Allocated " + std::to_string(gpa.get_current_usage()) +
+    log.info(("Allocated " + std::to_string(dbg.get_current_usage()) +
               " bytes of memory.")
                  .c_str());
-    log.info(("Peak usage: " + std::to_string(gpa.get_peak_usage()) +
+    log.info(("Peak usage: " + std::to_string(dbg.get_peak_usage()) +
               " bytes of memory.")
                  .c_str());
 
-    if (!gpa.detect_leaks()) {
+    if (!dbg.detect_leaks()) {
         log.info("No memory leaks detected.");
     } else {
         log.err("Memory leaks detected.");
-        log.err(("Allocated " + std::to_string(gpa.get_alloc_count()) +
+        log.err(("Allocated " + std::to_string(dbg.get_alloc_count()) +
                  " blocks of memory.")
                     .c_str());
-        log.err(("Deallocated " + std::to_string(gpa.get_dealloc_count()) +
+        log.err(("Deallocated " + std::to_string(dbg.get_dealloc_count()) +
                  " blocks of memory.")
                     .c_str());
-        log.err(("Allocated " + std::to_string(gpa.get_alloc_size()) +
+        log.err(("Allocated " + std::to_string(dbg.get_alloc_size()) +
                  " bytes of memory.")
                     .c_str());
-        log.err(("Deallocated " + std::to_string(gpa.get_dealloc_size()) +
+        log.err(("Deallocated " + std::to_string(dbg.get_dealloc_size()) +
                  " bytes of memory.")
                     .c_str());
     }
