@@ -6,7 +6,7 @@ namespace CrossFire
 
 auto cf_assert(bool condition, const char *message) -> void
 {
-#ifdef NDEBUG
+#ifndef NDEBUG
     if (condition)
         return;
 

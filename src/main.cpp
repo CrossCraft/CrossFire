@@ -5,7 +5,45 @@ using namespace CrossFire;
 auto main() -> i32
 {
     Timer timer;
+    auto gpa = DebugAllocator();
+    Allocator &allocator = gpa;
+
+    auto result = allocator.allocate(1024);
+    if (result.is_err())
+        return EXIT_FAILURE;
+
+    auto ptr = result.unwrap();
+    auto slice = Slice<u8>(ptr.ptr, ptr.len);
+    for (usize i = 0; i < slice.len; i++)
+        slice[i] = i;
+
     auto &log = Logger::get_stdout();
+
+    log.info(("Allocated " + std::to_string(gpa.get_current_usage()) +
+              " bytes of memory.")
+                 .c_str());
+    log.info(("Peak usage: " + std::to_string(gpa.get_peak_usage()) +
+              " bytes of memory.")
+                 .c_str());
+
+    if (!gpa.detect_leaks()) {
+        log.info("No memory leaks detected.");
+    } else {
+        log.err("Memory leaks detected.");
+        log.err(("Allocated " + std::to_string(gpa.get_alloc_count()) +
+                 " blocks of memory.")
+                    .c_str());
+        log.err(("Deallocated " + std::to_string(gpa.get_dealloc_count()) +
+                 " blocks of memory.")
+                    .c_str());
+        log.err(("Allocated " + std::to_string(gpa.get_alloc_size()) +
+                 " bytes of memory.")
+                    .c_str());
+        log.err(("Deallocated " + std::to_string(gpa.get_dealloc_size()) +
+                 " bytes of memory.")
+                    .c_str());
+    }
+
     log.debug("This is a debug message.");
     log.info("This is an info message.");
     log.warn("This is a warning message.");
