@@ -37,11 +37,17 @@ auto CAllocator::reallocate(void *ptr, usize size, usize alignment)
 #if defined(_MSC_VER)
     auto new_ptr = _aligned_realloc(ptr, size, alignment);
 #else // Aligned alloc is standard in C11
-    auto new_ptr = aligned_realloc(ptr, size, alignment);
+    auto new_ptr = aligned_alloc(ptr, size, alignment);
 #endif
 
     if (!new_ptr)
         return AllocationError::ReallocFailed;
+
+#if !defined(_MSC_VER)
+    free(ptr);
+#endif
+
+    memcpy(new_ptr, ptr, size);
 
     return new_ptr;
 }
