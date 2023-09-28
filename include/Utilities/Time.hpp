@@ -6,13 +6,15 @@ namespace CrossFire
 
 auto get_time_microseconds() -> u64;
 
-struct Timer
-{
+struct Timer {
     u64 start_time = 0;
     u64 current_time = 0;
     u64 last_time = 0;
 
-    Timer() { reset(); }
+    Timer()
+    {
+        reset();
+    }
 
     inline auto update() -> void
     {

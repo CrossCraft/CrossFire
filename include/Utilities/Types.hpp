@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
+#include <variant>
+#include <optional>
 
 namespace CrossFire
 {
@@ -28,6 +30,12 @@ typedef ptrdiff_t isize;
 typedef const char *cstring;
 
 template <typename T> struct Slice {
+    Slice()
+        : ptr(nullptr)
+        , len(0)
+    {
+    }
+
     Slice(T *ptr, usize len)
         : ptr(ptr)
         , len(len)
@@ -53,5 +61,52 @@ template <typename T> struct Slice {
         return ptr[index];
     }
 };
+
+template <typename... T> using TaggedUnion = std::variant<T...>;
+template <typename T> using Option = std::optional<T>;
+using None = std::nullopt_t;
+using Ok = std::monostate;
+
+template <typename T, typename E> class Result {
+    TaggedUnion<T, E> value;
+
+public:
+    // Not explicit to allow implicit return
+    Result(T value)
+        : value(value)
+    {
+    }
+
+    // Not explicit to allow implicit return
+    Result(E value)
+        : value(value)
+    {
+    }
+
+    auto is_ok() -> bool
+    {
+        return std::holds_alternative<T>(value);
+    }
+
+    auto is_err() -> bool
+    {
+        return std::holds_alternative<E>(value);
+    }
+
+    auto unwrap() -> T
+    {
+        cf_assert(is_ok(), "Result is not ok");
+
+        return std::get<T>(value);
+    }
+
+    auto unwrap_err() -> E
+    {
+        cf_assert(is_err(), "Result is not err");
+
+        return std::get<E>(value);
+    }
+};
+template <typename E> using Error = Result<Ok, E>;
 
 }
