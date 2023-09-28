@@ -81,7 +81,7 @@ class Logger final {
     }
 
 public:
-    explicit Logger(BufferedWriter& writer, LogLevel level = LogLevel::Info)
+    explicit Logger(BufferedWriter& writer, LogLevel level = LogLevel::Debug)
         : level(level)
         , writer(writer)
     {
