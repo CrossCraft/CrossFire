@@ -58,6 +58,7 @@ LinearAllocator::LinearAllocator(usize size, Allocator &allocator)
 
 LinearAllocator::~LinearAllocator()
 {
+    backing_allocator.deallocate(memory.ptr);
     memory = {};
     offset = 0;
 }
@@ -75,14 +76,67 @@ auto LinearAllocator::allocate(usize size, usize alignment)
 auto LinearAllocator::deallocate(void *ptr) -> void
 {
     // Do nothing
+    (void)ptr;
 }
 
 auto LinearAllocator::reallocate(void *ptr, CrossFire::usize size,
                                  CrossFire::usize alignment)
     -> Result<void *, AllocationError>
 {
+    (void)size;
+    (void)alignment;
+
     // Do nothing
     return ptr;
+}
+
+StackAllocator::StackAllocator(usize size, Allocator &allocator)
+    : backing_allocator(allocator)
+{
+    auto result = allocator.allocate(size);
+    memory.ptr = static_cast<u8 *>(result.unwrap());
+    memory.len = size;
+    offset = 0;
+    last_offset = 0;
+}
+
+StackAllocator::~StackAllocator()
+{
+    backing_allocator.deallocate(memory.ptr);
+    memory = {};
+    offset = 0;
+    last_offset = 0;
+}
+
+auto StackAllocator::allocate(usize size, usize alignment)
+    -> Result<void *, AllocationError>
+{
+    auto aligned_offset = (offset + alignment - 1) & ~(alignment - 1);
+    if (aligned_offset + size > memory.len)
+        return AllocationError::OutOfMemory;
+
+    offset = aligned_offset + size;
+    return memory.ptr + aligned_offset;
+}
+auto StackAllocator::deallocate(void *ptr) -> void
+{
+    if (ptr == memory.ptr + offset)
+        offset = last_offset;
+}
+
+auto StackAllocator::reallocate(void *ptr, usize size, usize alignment)
+    -> Result<void *, AllocationError>
+{
+    if (ptr == memory.ptr + offset) {
+        auto aligned_offset = (last_offset + alignment - 1) & ~(alignment - 1);
+        if (aligned_offset + size > memory.len)
+            return AllocationError::OutOfMemory;
+
+        offset = aligned_offset + size;
+        return memory.ptr + aligned_offset;
+    } else {
+        return ptr;
+    }
 }
 
 }

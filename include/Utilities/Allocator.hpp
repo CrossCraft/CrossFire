@@ -83,4 +83,22 @@ public:
         -> Result<void *, AllocationError> override;
 };
 
+class StackAllocator : public Allocator {
+    Slice<u8> memory;
+    usize offset;
+    usize last_offset;
+    Allocator &backing_allocator;
+
+public:
+    explicit StackAllocator(usize size, Allocator &allocator = c_allocator);
+    ~StackAllocator() override;
+
+    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+        -> Result<void *, AllocationError> override;
+    auto deallocate(void *ptr) -> void override;
+    auto reallocate(void *ptr, usize size,
+                    usize alignment = alignof(std::max_align_t))
+        -> Result<void *, AllocationError> override;
+};
+
 }
