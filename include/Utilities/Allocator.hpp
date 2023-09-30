@@ -214,10 +214,11 @@ class GPAllocator : public Allocator {
     std::map<usize, Allocation> reserved_map;
     Slice<u8> memory;
 
-    Allocator &backing_allocator;
+    Allocator *backing_allocator;
 
 public:
-    explicit GPAllocator(usize size, Allocator &allocator = c_allocator);
+    explicit GPAllocator(Slice<u8> memory);
+    explicit GPAllocator(usize size, Allocator *allocator = &c_allocator);
     ~GPAllocator() override;
 
     [[nodiscard]] auto allocate(usize size,
@@ -228,5 +229,97 @@ public:
                                   usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 };
+
+extern GPAllocator stack_allocator;
+
+// Implement a Unique Pointer
+template <typename T> class UniquePtr {
+    T *ptr;
+    Allocator &allocator;
+
+public:
+    explicit UniquePtr(T *ptr, Allocator &allocator)
+        : ptr(ptr)
+        , allocator(allocator)
+    {
+    }
+
+    ~UniquePtr()
+    {
+        allocator.destroy(ptr);
+    }
+
+    UniquePtr(const UniquePtr<T> &other) = delete;
+    UniquePtr<T> &operator=(const UniquePtr<T> &other) = delete;
+
+    UniquePtr(UniquePtr<T> &&other) noexcept : ptr(other.ptr),
+                                               allocator(other.allocator)
+    {
+        other.ptr = nullptr;
+    }
+
+    inline auto operator=(UniquePtr<T> &&other) noexcept->UniquePtr<T> &
+    {
+        if (this != &other) {
+            allocator.destroy(ptr);
+            ptr = other.ptr;
+            allocator = other.allocator;
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    inline auto operator*() const -> T &
+    {
+        return *ptr;
+    }
+
+    inline auto operator->() const -> T *
+    {
+        return ptr;
+    }
+
+    inline auto get() const -> T *
+    {
+        return ptr;
+    }
+
+    inline auto reset(T *new_ptr) -> void
+    {
+        allocator.destroy(ptr);
+        ptr = new_ptr;
+    }
+
+    inline auto swap(UniquePtr<T> &other) noexcept->void
+    {
+        T *tmp = ptr;
+        ptr = other.ptr;
+        other.ptr = tmp;
+    }
+
+    inline auto release() -> T *
+    {
+        T *tmp = ptr;
+        ptr = nullptr;
+        return tmp;
+    }
+
+    template <typename... Args>
+    inline static auto create(Allocator &allocator, Args &&...args)
+        -> Result<UniquePtr<T>, AllocationError>
+    {
+        auto ptr = allocator.create<T>(std::forward<Args>(args)...);
+        if (ptr.is_err())
+            return ptr.unwrap_err();
+        return UniquePtr<T>(ptr.unwrap(), allocator);
+    }
+};
+
+template <typename T, typename... Args>
+inline auto create_unique_stack(Args &&...args)
+    -> Result<UniquePtr<T>, AllocationError>
+{
+    return UniquePtr<T>::create(stack_allocator, std::forward<Args>(args)...);
+}
 
 }

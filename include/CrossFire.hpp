@@ -2,6 +2,8 @@
 
 #include "Utilities/Types.hpp"
 #include "Utilities/Filesystem/File.hpp"
+#include "Utilities/Filesystem/Directory.hpp"
+#include "Utilities/Filesystem/Filesystem.hpp"
 #include "Utilities/IO.hpp"
 #include "Utilities/Logger.hpp"
 #include "Utilities/Time.hpp"

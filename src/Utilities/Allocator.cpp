@@ -201,22 +201,37 @@ auto DebugAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
 }
 
 CAllocator c_allocator = CAllocator();
+u8 stack_buffer[64 * 1024];
+GPAllocator stack_allocator =
+    GPAllocator(Slice<u8>(stack_buffer, sizeof(stack_buffer)));
 
-GPAllocator::GPAllocator(usize size, Allocator &allocator)
+GPAllocator::GPAllocator(usize size, Allocator *allocator)
     : free_map()
     , reserved_map()
     , backing_allocator(allocator)
 {
-    auto result = allocator.allocate(size);
+    auto result = allocator->allocate(size);
     memory = result.unwrap();
     auto base = (usize)result.unwrap().ptr;
 
     free_map.emplace(base, Allocation(base, size));
 }
 
+GPAllocator::GPAllocator(Slice<CrossFire::u8> memory)
+{
+    backing_allocator = nullptr;
+    this->memory = memory;
+    auto base = (usize)memory.ptr;
+
+    free_map.emplace(base, Allocation(base, memory.len));
+}
+
 GPAllocator::~GPAllocator()
 {
-    backing_allocator.deallocate(memory);
+    // Check if backing_allocator is null
+    if (backing_allocator != nullptr) {
+        backing_allocator->deallocate(memory);
+    }
     memory = {};
 
     free_map.clear();
