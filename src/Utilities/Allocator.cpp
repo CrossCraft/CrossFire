@@ -7,10 +7,10 @@ namespace CrossFire
 auto CAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
-    if(size == 0)
+    if (size == 0)
         return AllocationError::InvalidSize;
 
-    // MSVC doesn't support aligned_alloc
+        // MSVC doesn't support aligned_alloc
 #if defined(_MSC_VER)
     auto ptr = _aligned_malloc(size, alignment);
 #else // Aligned alloc is standard in C11
@@ -73,7 +73,7 @@ LinearAllocator::~LinearAllocator()
 auto LinearAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
-    if(size == 0)
+    if (size == 0)
         return AllocationError::InvalidSize;
 
     auto aligned_offset = (offset + alignment - 1) & ~(alignment - 1);
@@ -120,7 +120,7 @@ StackAllocator::~StackAllocator()
 auto StackAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
-    if(size == 0)
+    if (size == 0)
         return AllocationError::InvalidSize;
 
     auto aligned_offset = (offset + alignment - 1) & ~(alignment - 1);
@@ -165,14 +165,15 @@ auto DebugAllocator::allocate(usize size, usize alignment)
     if (current_usage > peak_usage)
         peak_usage = current_usage;
 
-    for(usize i = 0; i < size; i++)
-        result.unwrap().ptr[i] = 0xAA; // SET TO 0xAA TO DETECT UNINITIALIZED MEMORY
+    for (usize i = 0; i < size; i++)
+        result.unwrap().ptr[i] =
+            0xAA; // SET TO 0xAA TO DETECT UNINITIALIZED MEMORY
 
     return result.unwrap();
 }
 auto DebugAllocator::deallocate(Slice<u8> ptr) -> void
 {
-    for(usize i = 0; i < ptr.len; i++)
+    for (usize i = 0; i < ptr.len; i++)
         ptr[i] = 0xDD; // SET TO 0xDD TO DETECT USE AFTER FREE
 
     backing_allocator.deallocate(ptr);
@@ -201,7 +202,10 @@ auto DebugAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
 
 CAllocator c_allocator = CAllocator();
 
-GPAllocator::GPAllocator(usize size, Allocator &allocator) : free_map(), reserved_map(), backing_allocator(allocator)
+GPAllocator::GPAllocator(usize size, Allocator &allocator)
+    : free_map()
+    , reserved_map()
+    , backing_allocator(allocator)
 {
     auto result = allocator.allocate(size);
     memory = result.unwrap();
@@ -210,7 +214,8 @@ GPAllocator::GPAllocator(usize size, Allocator &allocator) : free_map(), reserve
     free_map.emplace(base, Allocation(base, size));
 }
 
-GPAllocator::~GPAllocator() {
+GPAllocator::~GPAllocator()
+{
     backing_allocator.deallocate(memory);
     memory = {};
 
@@ -219,16 +224,17 @@ GPAllocator::~GPAllocator() {
 }
 
 auto GPAllocator::allocate(usize size, usize alignment)
-    -> Result<Slice<u8>, AllocationError> {
-    if(size == 0)
+    -> Result<Slice<u8>, AllocationError>
+{
+    if (size == 0)
         return AllocationError::InvalidSize;
 
     // Calculate the aligned size
     auto aligned_size = (size + alignment - 1) & ~(alignment - 1);
 
     // Find a free block that is large enough
-    for(auto it = free_map.begin(); it != free_map.end(); it++) {
-        if(it->second.size >= aligned_size) {
+    for (auto it = free_map.begin(); it != free_map.end(); it++) {
+        if (it->second.size >= aligned_size) {
             // Found a block that is large enough
             auto ret = Slice<u8>((u8 *)it->first, size);
 
@@ -238,7 +244,7 @@ auto GPAllocator::allocate(usize size, usize alignment)
             reserved_map.emplace(block.base, block);
 
             // Split the block if it is larger than the requested size
-            if(block.size > aligned_size) {
+            if (block.size > aligned_size) {
                 block.base += aligned_size;
                 block.size -= aligned_size;
 
@@ -254,12 +260,13 @@ auto GPAllocator::allocate(usize size, usize alignment)
     // We couldn't find a free block that is large enough
     return AllocationError::OutOfMemory;
 }
-auto GPAllocator::deallocate(Slice<u8> ptr) -> void {
+auto GPAllocator::deallocate(Slice<u8> ptr) -> void
+{
     auto base = (usize)ptr.ptr;
 
     // Find the block in the reserved map
     auto it = reserved_map.find(base);
-    if(it == reserved_map.end())
+    if (it == reserved_map.end())
         return; // The block was not found
 
     // Remove from the reserved map
@@ -270,37 +277,42 @@ auto GPAllocator::deallocate(Slice<u8> ptr) -> void {
     auto freeIt = free_map.emplace(block.base, block);
 
     // Check to merge with the previous block
-    for(auto predIt = free_map.begin(); predIt != free_map.end(); predIt++) {
+    for (auto predIt = free_map.begin(); predIt != free_map.end(); predIt++) {
         // Check if the block is before
         // And if the block is adjacent / overlapping
-        if(predIt->second.base <= freeIt->second.base && predIt->second.base + predIt->second.size >= freeIt->second.base) {
-            auto predBase = predIt->second.base;
+        if (predIt->second.base <= freeIt->second.base &&
+            predIt->second.base + predIt->second.size >= freeIt->second.base) {
+            auto predBase = predIt->first;
             predIt->second.size += freeIt->second.size;
             free_map.erase(freeIt);
 
             // Update the iterator so we don't use an invalid iterator
             freeIt = free_map.find(predBase);
+            if (freeIt == free_map.end())
+                return;
+
             break;
         }
     }
 
     // Check to merge with the next block
-    for(auto succIt = free_map.begin(); succIt != free_map.end(); succIt++) {
+    for (auto succIt = free_map.begin(); succIt != free_map.end(); succIt++) {
         // Check if the block is after
         // And if the block is adjacent / overlapping
-        if(freeIt->second.base <= succIt->second.base && freeIt->second.base + freeIt->second.size >= succIt->second.base) {
+        if (freeIt->second.base <= succIt->second.base &&
+            freeIt->second.base + freeIt->second.size >= succIt->second.base) {
             freeIt->second.size += succIt->second.size;
             free_map.erase(succIt);
             break;
         }
     }
-
 }
 auto GPAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
-    -> Result<Slice<u8>, AllocationError> {
+    -> Result<Slice<u8>, AllocationError>
+{
     auto result = allocate(size, alignment);
 
-    if(result.is_err())
+    if (result.is_err())
         return result.unwrap_err();
 
     memcpy(result.unwrap().ptr, ptr.ptr, ptr.len);
@@ -309,6 +321,5 @@ auto GPAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
 
     return result.unwrap();
 }
-
 
 }

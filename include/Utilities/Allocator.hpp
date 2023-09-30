@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
-#include "Utilities/Types.hpp"
+#include <string>
+#include "Types.hpp"
+#include "Logger.hpp"
 
 namespace CrossFire
 {
@@ -14,16 +16,17 @@ enum class AllocationError {
 struct Allocator {
     virtual ~Allocator() = default;
 
-    virtual auto allocate(usize size,
-                          usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] virtual auto
+    allocate(usize size, usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> = 0;
     virtual auto deallocate(Slice<u8> ptr) -> void = 0;
-    virtual auto reallocate(Slice<u8> ptr, usize size,
-                            usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] virtual auto
+    reallocate(Slice<u8> ptr, usize size,
+               usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> = 0;
 
     template <typename T, typename... Args>
-    auto create(Args &&...args) -> Result<T *, AllocationError>
+    [[nodiscard]] auto create(Args &&...args) -> Result<T *, AllocationError>
     {
         auto ptr = allocate(sizeof(T), alignof(T));
         if (ptr.is_err())
@@ -39,18 +42,30 @@ struct Allocator {
     }
 
     template <typename T>
-    auto alloc(usize count) -> Result<Slice<T>, AllocationError>
+    [[nodiscard]] auto alloc(usize count) -> Result<Slice<T>, AllocationError>
     {
         auto ptr = allocate(sizeof(T) * count, alignof(T));
         if (ptr.is_err())
             return ptr.unwrap_err();
 
-        return Slice<T>(static_cast<T *>(ptr.unwrap().ptr), count);
+        return Slice<T>((T *)(ptr.unwrap().ptr), count);
+    }
+
+    template <typename T>
+    [[nodiscard]] auto realloc(Slice<T> ptr, usize count)
+        -> Result<Slice<T>, AllocationError>
+    {
+        auto nptr = reallocate(Slice<u8>((u8 *)ptr.ptr, sizeof(T) * ptr.len),
+                               sizeof(T) * count, alignof(T));
+        if (nptr.is_err())
+            return nptr.unwrap_err();
+
+        return Slice<T>((T *)(nptr.unwrap().ptr), count);
     }
 
     template <typename T> auto dealloc(Slice<T> slice) -> void
     {
-        deallocate(Slice<u8>(slice.ptr, sizeof(T) * slice.len));
+        deallocate(Slice<u8>((u8 *)slice.ptr, sizeof(T) * slice.len));
     }
 };
 
@@ -58,11 +73,12 @@ struct CAllocator final : public Allocator {
     CAllocator() = default;
     ~CAllocator() override = default;
 
-    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto allocate(usize size,
+                                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
     auto deallocate(Slice<u8> ptr) -> void override;
-    auto reallocate(Slice<u8> ptr, usize size,
-                    usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto reallocate(Slice<u8> ptr, usize size,
+                                  usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 };
 
@@ -77,11 +93,12 @@ public:
     explicit LinearAllocator(usize size, Allocator &allocator = c_allocator);
     ~LinearAllocator() override;
 
-    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto allocate(usize size,
+                                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
     auto deallocate(Slice<u8> ptr) -> void override;
-    auto reallocate(Slice<u8> ptr, usize size,
-                    usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto reallocate(Slice<u8> ptr, usize size,
+                                  usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 };
 
@@ -95,11 +112,12 @@ public:
     explicit StackAllocator(usize size, Allocator &allocator = c_allocator);
     ~StackAllocator() override;
 
-    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto allocate(usize size,
+                                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
     auto deallocate(Slice<u8> ptr) -> void override;
-    auto reallocate(Slice<u8> ptr, usize size,
-                    usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto reallocate(Slice<u8> ptr, usize size,
+                                  usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 };
 
@@ -118,13 +136,31 @@ public:
         : backing_allocator(allocator)
     {
     }
-    ~DebugAllocator() override = default;
+    ~DebugAllocator() override
+    {
+        if (detect_leaks()) {
+            auto &err = Logger::get_stderr();
+            err.err("Memory leak detected!");
+            err.err(("Allocated " + std::to_string(alloc_count) + " times.")
+                        .c_str());
+            err.err(("Deallocated " + std::to_string(dealloc_count) + " times.")
+                        .c_str());
+            err.err(
+                ("Allocated " + std::to_string(alloc_size) + " bytes.").c_str());
+            err.err(("Deallocated " + std::to_string(dealloc_size) + " bytes.")
+                        .c_str());
+            err.err(
+                ("Current usage: " + std::to_string(current_usage) + " bytes.")
+                    .c_str());
+        }
+    };
 
-    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto allocate(usize size,
+                                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
     auto deallocate(Slice<u8> ptr) -> void override;
-    auto reallocate(Slice<u8> ptr, usize size,
-                    usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto reallocate(Slice<u8> ptr, usize size,
+                                  usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 
     inline auto get_alloc_count() const -> usize
@@ -179,17 +215,18 @@ class GPAllocator : public Allocator {
     Slice<u8> memory;
 
     Allocator &backing_allocator;
+
 public:
     explicit GPAllocator(usize size, Allocator &allocator = c_allocator);
     ~GPAllocator() override;
 
-    auto allocate(usize size, usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto allocate(usize size,
+                                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
     auto deallocate(Slice<u8> ptr) -> void override;
-    auto reallocate(Slice<u8> ptr, usize size,
-                    usize alignment = alignof(std::max_align_t))
+    [[nodiscard]] auto reallocate(Slice<u8> ptr, usize size,
+                                  usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> override;
 };
-
 
 }

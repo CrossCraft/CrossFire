@@ -52,6 +52,12 @@ template <typename T> struct Slice {
         return Slice<const u8>{ (const u8 *)ptr, len };
     }
 
+    auto back() -> T &
+    {
+        cf_assert(len > 0, "Slice is empty");
+        return ptr[len - 1];
+    }
+
     T *ptr;
     usize len;
 
@@ -107,6 +113,7 @@ public:
         return std::get<E>(value);
     }
 };
-template <typename E> using Error = Result<Ok, E>;
+
+template <typename E> using ResultVoid = Result<Ok, E>;
 
 }
