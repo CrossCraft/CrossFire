@@ -77,13 +77,13 @@ template <typename T, typename E> class Result {
     TaggedUnion<T, E> value;
 
 public:
-    // Not explicit to allow implicit return
+    // Not explicit to allow implicit return (preferred)
     Result(T value)
         : value(value)
     {
     }
 
-    // Not explicit to allow implicit return
+    // Not explicit to allow implicit return (preferred)
     Result(E value)
         : value(value)
     {

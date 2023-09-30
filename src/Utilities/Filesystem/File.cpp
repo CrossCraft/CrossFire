@@ -1,5 +1,7 @@
 #include "CFile.hpp"
+#include <Utilities/Allocator.hpp>
 #include <cstdio>
+#include <iostream>
 
 namespace CrossFire::detail
 {
@@ -62,21 +64,28 @@ auto CFile::close() -> void
 namespace CrossFire
 {
 
-auto FileFactory::open(const char *filename, const char *mode) -> FileBase
+auto FileFactory::open(const char *filename, const char *mode)
+    -> UniquePtr<FileBase>
 {
-    return detail::CFile(filename, mode);
+    auto r = stack_allocator.create<detail::CFile>(filename, mode);
+    FileBase *ptr = nullptr;
+    if (r.is_ok()) {
+        ptr = r.unwrap();
+    }
+
+    return UniquePtr<FileBase>(ptr, stack_allocator);
 }
 
-auto FileFactory::get_stdout() -> FileBase &
+auto FileFactory::get_stdout() -> FileBase *
 {
     static auto stdout_file = detail::CFile(stdout);
-    return stdout_file;
+    return &stdout_file;
 }
 
-auto FileFactory::get_stderr() -> FileBase &
+auto FileFactory::get_stderr() -> FileBase *
 {
     static auto stderr_file = detail::CFile(stderr);
-    return stderr_file;
+    return &stderr_file;
 }
 
 }

@@ -115,7 +115,7 @@ public:
     inline static auto get_stdout() -> Logger &
     {
         static auto stdout_bwriter =
-            BufferedWriter(FileFactory::get_stdout().writer());
+            BufferedWriter(FileFactory::get_stdout()->writer());
         static auto stdout_logger = Logger(stdout_bwriter);
         return stdout_logger;
     }
@@ -123,7 +123,7 @@ public:
     inline static auto get_stderr() -> Logger &
     {
         static auto stderr_bwriter =
-            BufferedWriter(FileFactory::get_stderr().writer());
+            BufferedWriter(FileFactory::get_stderr()->writer());
         static auto stderr_logger = Logger(stderr_bwriter);
         return stderr_logger;
     }

@@ -67,21 +67,14 @@ protected:
     void *ctx = nullptr;
 };
 
-/**
- * @brief File is a factory class for File objects.
- */
+template <typename T> class UniquePtr;
+
 class FileFactory {
 public:
-    /**
-	 * @brief open opens a file.
-	 * @param filename Filename to open.
-	 * @param mode Mode to open the file in.
-	 * @return File object.
-	 */
-    static auto open(const char *filename, const char *mode) -> FileBase;
-
-    static auto get_stdout() -> FileBase &;
-    static auto get_stderr() -> FileBase &;
+    static auto open(const char *filename, const char *mode)
+        -> UniquePtr<FileBase>;
+    static auto get_stdout() -> FileBase *;
+    static auto get_stderr() -> FileBase *;
 };
 
 }
