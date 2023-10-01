@@ -14,17 +14,30 @@
 namespace CrossFire
 {
 
+/**
+ * @brief A simple thread class.
+ */
 class Thread {
     std::thread thread;
     std::function<void()> function;
 
 public:
+    /**
+     * @brief Construct a new Thread object.
+     * @tparam F The type of the function.
+     * @param f The function.
+     */
     template <typename F>
     explicit Thread(F &&f)
         : function(std::forward<F>(f))
     {
     }
 
+    /**
+     * @brief Start the thread.
+     * @tparam Args The types of the arguments.
+     * @param args The arguments.
+     */
     template <typename... Args> auto start(Args &&...args) -> void
     {
         std::tuple<> args_tuple = std::make_tuple(std::forward<Args>(args)...);
@@ -32,6 +45,9 @@ public:
             [this, args_tuple]() { std::apply(function, args_tuple); });
     }
 
+    /**
+     * @brief Join the thread.
+     */
     auto join() -> void
     {
         thread.join();

@@ -10,6 +10,9 @@
 namespace CrossFire
 {
 
+/**
+ * @brief The LogLevel enum represents the log level.
+ */
 enum class LogLevel {
     Debug = 0,
     Info = 1,
@@ -17,6 +20,11 @@ enum class LogLevel {
     Error = 3,
 };
 
+/**
+ * @brief Get the log level string.
+ * @param lvl The log level.
+ * @return The log level string.
+ */
 inline auto get_level_string(const LogLevel &lvl) -> const char *
 {
     switch (lvl) {
@@ -35,6 +43,9 @@ inline auto get_level_string(const LogLevel &lvl) -> const char *
 
 constexpr const char *timestamp_format = "%02d-%02d-%04d|%02d:%02d:%02d";
 
+/**
+ * @brief The Logger class is a simple logger.
+ */
 class Logger final {
     LogLevel level;
     BufferedWriter &writer;
@@ -42,6 +53,11 @@ class Logger final {
     const char *name = nullptr;
     SpinLock lock;
 
+    /**
+     * @brief Log a message.
+     * @param lvl The log level.
+     * @param buffer The buffer to log.
+     */
     inline auto log(LogLevel lvl, const Slice<u8> &buffer) -> void
     {
         LockGuard<SpinLock> guard(lock);
@@ -81,6 +97,11 @@ class Logger final {
     }
 
 public:
+    /**
+     * @brief Construct a new Logger object.
+     * @param writer A BufferedWriter to write to.
+     * @param level The log level.
+     */
     explicit Logger(BufferedWriter &writer, LogLevel level = LogLevel::Debug)
         : level(level)
         , writer(writer)
@@ -92,26 +113,45 @@ public:
         flush();
     }
 
+    /**
+     * @brief Flush the logger.
+     */
     inline auto flush() -> void
     {
         writer.flush();
     }
 
+    /**
+     * @brief Set the log level.
+     * @param lvl The log level.
+     */
     inline auto set_level(LogLevel lvl) -> void
     {
         level = lvl;
     }
 
+    /**
+     * @brief Set whether or not to timestamp the log.
+     * @param stamp Whether or not to timestamp the log.
+     */
     inline auto set_timestamp(bool stamp) -> void
     {
         timestamp = stamp;
     }
 
+    /**
+     * @brief Set the name of the logger.
+     * @param log_name The name of the logger.
+     */
     inline auto set_name(const char *log_name) -> void
     {
         name = log_name;
     }
 
+    /**
+     * @brief Get the stdout logger.
+     * @return The stdout logger.
+     */
     inline static auto get_stdout() -> Logger &
     {
         static auto stdout_bwriter =
@@ -120,6 +160,10 @@ public:
         return stdout_logger;
     }
 
+    /**
+     * @brief Get the stderr logger.
+     * @return The stderr logger.
+     */
     inline static auto get_stderr() -> Logger &
     {
         static auto stderr_bwriter =
@@ -128,21 +172,37 @@ public:
         return stderr_logger;
     }
 
+    /**
+     * @brief Log a message.
+     * @param message The message to log.
+     */
     inline auto debug(const char *message) -> void
     {
         log(LogLevel::Debug, Slice<u8>::from_string(message));
     }
 
+    /**
+     * @brief Log a message.
+     * @param message The message to log.
+     */
     inline auto info(const char *message) -> void
     {
         log(LogLevel::Info, Slice<u8>::from_string(message));
     }
 
+    /**
+     * @brief Log a message.
+     * @param message The message to log.
+     */
     inline auto warn(const char *message) -> void
     {
         log(LogLevel::Warning, Slice<u8>::from_string(message));
     }
 
+    /**
+     * @brief Log a message.
+     * @param message The message to log.
+     */
     inline auto err(const char *message) -> void
     {
         log(LogLevel::Error, Slice<u8>::from_string(message));

@@ -12,6 +12,10 @@ template <typename T> class List {
     Allocator &allocator;
 
 public:
+    /**
+     * @brief Creates a new list.
+     * @param allocator The allocator to use.
+     */
     List(Allocator &allocator)
         : allocator(allocator)
         , data(allocator.alloc<T>(8).unwrap())

@@ -4,6 +4,10 @@
 namespace CrossFire
 {
 
+/**
+ * @brief A generic lock guard using RAII.
+ * @tparam T The type of the lock.
+ */
 template <typename T> class LockGuard {
 public:
     explicit LockGuard(T &lock)
@@ -20,6 +24,9 @@ private:
     T &lock;
 };
 
+/**
+ * @brief A simple spinlock.
+ */
 class SpinLock {
 public:
     SpinLock() = default;
