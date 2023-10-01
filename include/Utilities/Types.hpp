@@ -1,11 +1,12 @@
 #pragma once
-
+#include <array>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
+#include <map>
+#include <optional>
 #include <stdexcept>
 #include <variant>
-#include <optional>
 
 namespace CrossFire
 {
@@ -115,5 +116,6 @@ public:
 };
 
 template <typename E> using ResultVoid = Result<Ok, E>;
+template <typename T, usize N> using Array = std::array<T, N>;
 
 }
