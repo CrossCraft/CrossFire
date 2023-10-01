@@ -9,25 +9,27 @@ CrossFire will be used primarily in the development of the CrossCraft project, a
 
 ## Platform Support List
 
-✔️ - Completed
-🚧 - Work In Progress
-❌ - Not Started
+✔️ Supported
 
-| Platform      | Status    |
-| ------------- | ------    |
-| Windows       | ✔️        |
-| MacOS (x86)   | ❌        |
-| MacOS (ARM)   | ❌        |
-| Linux         | ✔️        |
-| Android       | 🚧        |
-| PSP           | ✔️        |
-| PS Vita       | ✔️        |
-| PS2           | 🚧        |
-| PS3           | ❌        |
-| PS4           | ❌        |
-| 3DS           | ❌        |
-| Switch        | ❌        |
-| Wii           | ❌        |
-| Wii U         | ❌        |
-| Xbox 360      | ❌        |
-| Xbox One      | ❌        |
+🚧 Work In Progress
+
+❌ Not Supported (yet)
+
+| Platform    | Status |
+|-------------|--------|
+| Windows     | ✔️     |
+| MacOS (x86) | ❌      |
+| MacOS (ARM) | ❌      |
+| Linux       | ✔️     |
+| Android     | ❌      |
+| PSP         | ❌      |
+| PS Vita     | ❌      |
+| PS2         | ❌      |
+| PS3         | ❌      |
+| PS4         | ❌      |
+| 3DS         | ❌      |
+| Switch      | ❌      |
+| Wii         | ❌      |
+| Wii U       | ❌      |
+| Xbox 360    | ❌      |
+| Xbox One    | ❌      |
