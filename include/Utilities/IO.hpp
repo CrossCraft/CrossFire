@@ -8,30 +8,57 @@ namespace CrossFire
 
 // Function pointer read
 typedef usize (*ReadFn)(void *ctx, Slice<u8> &buffer);
+// Function pointer write
 typedef usize (*WriteFn)(void *ctx, const Slice<u8> &buffer);
 
+/**
+ * @brief The Reader class is an interface for reader objects.
+ */
 struct Reader {
     void *context = nullptr;
     ReadFn readFn = nullptr;
 
     Reader() = default;
+
+    /**
+     * @brief Construct a new Reader object.
+     * @param context The context pointer
+     * @param readFn The read function pointer
+     */
     Reader(void *context, ReadFn readFn)
         : context(context)
         , readFn(readFn)
     {
     }
 
+    /**
+     * @brief Read data from the reader.
+     * @param buffer The buffer to read into.
+     * @return The number of bytes read.
+     */
     [[nodiscard]] inline virtual auto raw_read(Slice<u8> &buffer) -> usize
     {
         return readFn(context, buffer);
     }
 
+    /**
+     * @brief Read data from the reader.
+     * @tparam T The type of the data to read.
+     * @param value The value to read into.
+     * @return The number of bytes read.
+     */
     template <typename T> inline auto read(T &value) -> usize
     {
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_read(buffer);
     }
 
+    /**
+     * @brief Read data from the reader.
+     * @tparam T The type of the data to read.
+     * @param value The value to read into.
+     * @return The number of bytes read.
+     */
     template <typename T> inline auto readForeign(T &value) -> usize
     {
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
@@ -47,29 +74,54 @@ struct Reader {
     }
 };
 
+/**
+ * @brief The Writer class is an interface for writer objects.
+ */
 struct Writer {
     void *context = nullptr;
     WriteFn writeFn = nullptr;
 
     Writer() = default;
+    /**
+     * @brief Construct a new Writer object.
+     * @param context The context pointer
+     * @param writeFn The write function pointer
+     */
     Writer(void *context, WriteFn writeFn)
         : context(context)
         , writeFn(writeFn)
     {
     }
 
+    /**
+     * @brief Write data to the writer.
+     * @param buffer The buffer to write from.
+     * @return The number of bytes written.
+     */
     [[nodiscard]] inline virtual auto raw_write(const Slice<u8> &buffer)
         -> usize
     {
         return writeFn(context, buffer);
     }
 
+    /**
+     * @brief Write data to the writer.
+     * @tparam T The type of the data to write.
+     * @param value The value to write.
+     * @return The number of bytes written.
+     */
     template <typename T> inline auto write(const T &value) -> usize
     {
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_write(buffer);
     }
 
+    /**
+     * @brief Write data to the writer.
+     * @tparam T The type of the data to write.
+     * @param value The value to write.
+     * @return The number of bytes written.
+     */
     template <typename T> inline auto writeForeign(const T &value) -> usize
     {
         T temp = value;
@@ -85,18 +137,31 @@ struct Writer {
     }
 };
 
+/**
+ * @brief Specific implementation of Writer::write for strings.
+ * @param value The string to write.
+ * @return The number of bytes written.
+ */
 template <> inline auto Writer::write(const std::string &value) -> usize
 {
     Slice<u8> buffer = Slice<u8>((u8 *)value.c_str(), value.length());
     return raw_write(buffer);
 }
 
+/**
+ * @brief Specific implementation of Writer::write for strings.
+ * @param value The string to write.
+ * @return The number of bytes written.
+ */
 template <> inline auto Writer::write(const cstring &value) -> usize
 {
     Slice<u8> buffer = Slice<u8>((u8 *)value, strlen(value));
     return raw_write(buffer);
 }
 
+/**
+ * @brief A buffered version of a reader.
+ */
 struct BufferedReader : Reader {
     Reader reader;
     static constexpr usize size = 1024;
@@ -134,6 +199,9 @@ struct BufferedReader : Reader {
     }
 };
 
+/**
+ * @brief A buffered version of a writer.
+ */
 struct BufferedWriter : Writer {
     Writer writer;
     static constexpr usize size = 4096;

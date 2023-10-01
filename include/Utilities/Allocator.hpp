@@ -13,18 +13,49 @@ enum class AllocationError {
     InvalidSize,
 };
 
+/**
+ * @brief The Allocator struct is the base class for all allocators.
+ * It provides a simple interface for allocating, deallocating and reallocating
+ * memory.
+ */
 struct Allocator {
     virtual ~Allocator() = default;
 
+    /**
+     * @brief Allocate memory.
+     * @param size The size of the memory to allocate.
+     * @param alignment The alignment of the memory to allocate.
+     * @return A slice to the allocated memory.
+     */
     [[nodiscard]] virtual auto
     allocate(usize size, usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> = 0;
+
+    /**
+     * @brief Deallocate memory.
+     * @param ptr The pointer to the memory to deallocate.
+     */
     virtual auto deallocate(Slice<u8> ptr) -> void = 0;
+
+    /**
+     * @brief Reallocate memory.
+     * @param ptr  The pointer to the memory to reallocate.
+     * @param size The new size of the memory.
+     * @param alignment The alignment of the memory to reallocate.
+     * @return A slice to the reallocated memory.
+     */
     [[nodiscard]] virtual auto
     reallocate(Slice<u8> ptr, usize size,
                usize alignment = alignof(std::max_align_t))
         -> Result<Slice<u8>, AllocationError> = 0;
 
+    /**
+     * @brief Create an object.
+     * @tparam T The type of the object.
+     * @tparam Args The types of the arguments.
+     * @param args The arguments to pass to the constructor.
+     * @return A pointer to the created object.
+     */
     template <typename T, typename... Args>
     [[nodiscard]] auto create(Args &&...args) -> Result<T *, AllocationError>
     {
@@ -35,12 +66,23 @@ struct Allocator {
         return new (ptr.unwrap().ptr) T(std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Destroy an object.
+     * @tparam T The type of the object.
+     * @param ptr The pointer to the object.
+     */
     template <typename T> auto destroy(T *ptr) -> void
     {
         ptr->~T();
         deallocate(Slice<u8>((u8 *)ptr, sizeof(T)));
     }
 
+    /**
+     * @brief Allocate a slice of memory.
+     * @tparam T The type of the slice.
+     * @param count The number of elements in the slice.
+     * @return A slice to the allocated memory.
+     */
     template <typename T>
     [[nodiscard]] auto alloc(usize count) -> Result<Slice<T>, AllocationError>
     {
@@ -51,6 +93,13 @@ struct Allocator {
         return Slice<T>((T *)(ptr.unwrap().ptr), count);
     }
 
+    /**
+     * @brief Reallocate a slice of memory.
+     * @tparam T The type of the slice.
+     * @param ptr The pointer to the slice.
+     * @param count The new number of elements in the slice.
+     * @return A slice to the reallocated memory.
+     */
     template <typename T>
     [[nodiscard]] auto realloc(Slice<T> ptr, usize count)
         -> Result<Slice<T>, AllocationError>
@@ -63,12 +112,20 @@ struct Allocator {
         return Slice<T>((T *)(nptr.unwrap().ptr), count);
     }
 
+    /**
+     * @brief Deallocate a slice of memory.
+     * @tparam T The type of the slice.
+     * @param slice The slice to deallocate.
+     */
     template <typename T> auto dealloc(Slice<T> slice) -> void
     {
         deallocate(Slice<u8>((u8 *)slice.ptr, sizeof(T) * slice.len));
     }
 };
 
+/**
+ * @brief The CAllocator struct is an allocator that uses the C functions aligned_alloc, realloc and free.
+ */
 struct CAllocator final : public Allocator {
     CAllocator() = default;
     ~CAllocator() override = default;
@@ -84,6 +141,11 @@ struct CAllocator final : public Allocator {
 
 extern CAllocator c_allocator;
 
+/**
+ * @brief The LinearAllocator struct is an allocator that allocates memory linearly.
+ * It does not support deallocation or reallocation.
+ * All allocations are freed when the allocator is destroyed.
+ */
 class LinearAllocator final : public Allocator {
     Slice<u8> memory;
     usize offset;
@@ -102,6 +164,11 @@ public:
         -> Result<Slice<u8>, AllocationError> override;
 };
 
+/**
+ * @brief The StackAllocator struct is an allocator that allocates memory linearly.
+ * All allocations are freed when the allocator is destroyed.
+ * You can deallocate memory, but only the last allocation.
+ */
 class StackAllocator : public Allocator {
     Slice<u8> memory;
     usize offset;
@@ -121,6 +188,12 @@ public:
         -> Result<Slice<u8>, AllocationError> override;
 };
 
+/**
+ * @brief The DebugAllocator struct is an allocator that tracks allocations and deallocations.
+ * It is useful for detecting memory leaks.
+ * It is not recommended to use this allocator in production.
+ * This allocator wraps another allocator.
+ */
 class DebugAllocator final : public Allocator {
     Allocator &backing_allocator;
     usize alloc_count = 0;
@@ -196,7 +269,10 @@ public:
 };
 
 /**
- * @brief Named after the Double Balanced Binary Search Tree (DBBST) data structure.
+ * @brief The GPAllocator struct is an allocator that allocates memory for general purpose.
+ * This allocator is efficient for allocating and deallocating memory, but not for reallocating.
+ * This allocator takes in a slice of memory to use or allocates its own memory.
+ * This allocator operates in O(log(n)) time for allocation and deallocation.
  */
 class GPAllocator : public Allocator {
     struct Allocation {
@@ -232,7 +308,10 @@ public:
 
 extern GPAllocator stack_allocator;
 
-// Implement a Unique Pointer
+/**
+ * @brief The UniquePtr class is a smart pointer that owns and manages another object through a pointer and disposes of that object when the UniquePtr goes out of scope.
+ * @tparam T The type of the object.
+ */
 template <typename T> class UniquePtr {
     T *ptr;
     Allocator &allocator;
@@ -304,6 +383,13 @@ public:
         return tmp;
     }
 
+    /**
+     * @brief Create a unique pointer.
+     * @tparam Args The types of the arguments.
+     * @param allocator The allocator to use.
+     * @param args The arguments to pass to the constructor.
+     * @return The new unique pointer -- or an error if allocation failed.
+     */
     template <typename... Args>
     inline static auto create(Allocator &allocator, Args &&...args)
         -> Result<UniquePtr<T>, AllocationError>
@@ -315,6 +401,13 @@ public:
     }
 };
 
+/**
+ * @brief Create a unique pointer on the stack.
+ * @tparam T The type of the object.
+ * @tparam Args The types of the arguments.
+ * @param args The arguments to pass to the constructor.
+ * @return The new unique pointer -- or an error if allocation failed.
+ */
 template <typename T, typename... Args>
 inline auto create_unique_stack(Args &&...args)
     -> Result<UniquePtr<T>, AllocationError>
@@ -322,6 +415,10 @@ inline auto create_unique_stack(Args &&...args)
     return UniquePtr<T>::create(stack_allocator, std::forward<Args>(args)...);
 }
 
+/**
+ * @brief The SharedPtr class is a smart pointer that retains shared ownership of an object through a pointer.
+ * @tparam T The type of the object.
+ */
 template <typename T> class SharedPtr {
     T *ptr;
     usize *ref_count;
@@ -425,6 +522,13 @@ public:
         other.ref_count = tmp2;
     }
 
+    /**
+     * @brief Create a shared pointer.
+     * @tparam Args The types of the arguments.
+     * @param allocator The allocator to use.
+     * @param args The arguments to pass to the constructor.
+     * @return The new shared pointer -- or an error if allocation failed.
+     */
     template <typename... Args>
     inline static auto create(Allocator &allocator, Args &&...args)
         -> Result<SharedPtr<T>, AllocationError>
@@ -436,6 +540,13 @@ public:
     }
 };
 
+/**
+ * @brief Create a shared pointer on the stack.
+ * @tparam T The type of the object.
+ * @tparam Args The types of the arguments.
+ * @param args The arguments to pass to the constructor.
+ * @return The new shared pointer -- or an error if allocation failed.
+ */
 template <typename T, typename... Args>
 inline auto create_shared_stack(Args &&...args)
     -> Result<SharedPtr<T>, AllocationError>
