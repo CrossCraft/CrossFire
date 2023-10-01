@@ -322,12 +322,11 @@ inline auto create_unique_stack(Args &&...args)
     return UniquePtr<T>::create(stack_allocator, std::forward<Args>(args)...);
 }
 
-
-template <typename T>
-class SharedPtr {
+template <typename T> class SharedPtr {
     T *ptr;
     usize *ref_count;
     Allocator &allocator;
+
 public:
     explicit SharedPtr(T *ptr, Allocator &allocator)
         : ptr(ptr)
@@ -344,9 +343,10 @@ public:
         }
     }
 
-    SharedPtr(const SharedPtr<T> &other) : ptr(other.ptr),
-                                           ref_count(other.ref_count),
-                                           allocator(other.allocator)
+    SharedPtr(const SharedPtr<T> &other)
+        : ptr(other.ptr)
+        , ref_count(other.ref_count)
+        , allocator(other.allocator)
     {
         ++(*ref_count);
     }
@@ -374,7 +374,7 @@ public:
         other.ref_count = nullptr;
     }
 
-    inline auto operator=(SharedPtr<T> &&other) noexcept -> SharedPtr<T> &
+    inline auto operator=(SharedPtr<T> &&other) noexcept->SharedPtr<T> &
     {
         if (this != &other) {
             if (--(*ref_count) == 0) {
@@ -415,7 +415,7 @@ public:
         ref_count = allocator.create<usize>(1).unwrap();
     }
 
-    inline auto swap(SharedPtr<T> &other) noexcept -> void
+    inline auto swap(SharedPtr<T> &other) noexcept->void
     {
         T *tmp = ptr;
         ptr = other.ptr;

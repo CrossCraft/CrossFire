@@ -40,8 +40,9 @@ class EventSystem final {
     std::map<usize, EventChannel> channels;
 
     EventSystem() = default;
+
 public:
-    inline static auto get() -> EventSystem&
+    inline static auto get() -> EventSystem &
     {
         static EventSystem instance;
         return instance;
