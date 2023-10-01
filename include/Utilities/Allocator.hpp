@@ -322,4 +322,125 @@ inline auto create_unique_stack(Args &&...args)
     return UniquePtr<T>::create(stack_allocator, std::forward<Args>(args)...);
 }
 
+
+template <typename T>
+class SharedPtr {
+    T *ptr;
+    usize *ref_count;
+    Allocator &allocator;
+public:
+    explicit SharedPtr(T *ptr, Allocator &allocator)
+        : ptr(ptr)
+        , ref_count(allocator.create<usize>(1).unwrap())
+        , allocator(allocator)
+    {
+    }
+
+    ~SharedPtr()
+    {
+        if (--(*ref_count) == 0) {
+            allocator.destroy(ref_count);
+            allocator.destroy(ptr);
+        }
+    }
+
+    SharedPtr(const SharedPtr<T> &other) : ptr(other.ptr),
+                                           ref_count(other.ref_count),
+                                           allocator(other.allocator)
+    {
+        ++(*ref_count);
+    }
+
+    inline auto operator=(const SharedPtr<T> &other) -> SharedPtr<T> &
+    {
+        if (this != &other) {
+            if (--(*ref_count) == 0) {
+                allocator.destroy(ref_count);
+                allocator.destroy(ptr);
+            }
+            ptr = other.ptr;
+            ref_count = other.ref_count;
+            allocator = other.allocator;
+            ++(*ref_count);
+        }
+        return *this;
+    }
+
+    SharedPtr(SharedPtr<T> &&other) noexcept : ptr(other.ptr),
+                                               ref_count(other.ref_count),
+                                               allocator(other.allocator)
+    {
+        other.ptr = nullptr;
+        other.ref_count = nullptr;
+    }
+
+    inline auto operator=(SharedPtr<T> &&other) noexcept -> SharedPtr<T> &
+    {
+        if (this != &other) {
+            if (--(*ref_count) == 0) {
+                allocator.destroy(ref_count);
+                allocator.destroy(ptr);
+            }
+            ptr = other.ptr;
+            ref_count = other.ref_count;
+            allocator = other.allocator;
+            other.ptr = nullptr;
+            other.ref_count = nullptr;
+        }
+        return *this;
+    }
+
+    inline auto operator*() const -> T &
+    {
+        return *ptr;
+    }
+
+    inline auto operator->() const -> T *
+    {
+        return ptr;
+    }
+
+    inline auto get() const -> T *
+    {
+        return ptr;
+    }
+
+    inline auto reset(T *new_ptr) -> void
+    {
+        if (--(*ref_count) == 0) {
+            allocator.destroy(ref_count);
+            allocator.destroy(ptr);
+        }
+        ptr = new_ptr;
+        ref_count = allocator.create<usize>(1).unwrap();
+    }
+
+    inline auto swap(SharedPtr<T> &other) noexcept -> void
+    {
+        T *tmp = ptr;
+        ptr = other.ptr;
+        other.ptr = tmp;
+        usize *tmp2 = ref_count;
+        ref_count = other.ref_count;
+        other.ref_count = tmp2;
+    }
+
+    template <typename... Args>
+    inline static auto create(Allocator &allocator, Args &&...args)
+        -> Result<SharedPtr<T>, AllocationError>
+    {
+        auto ptr = allocator.create<T>(std::forward<Args>(args)...);
+        if (ptr.is_err())
+            return ptr.unwrap_err();
+        return SharedPtr<T>(ptr.unwrap(), allocator);
+    }
+};
+
+template <typename T, typename... Args>
+inline auto create_shared_stack(Args &&...args)
+    -> Result<SharedPtr<T>, AllocationError>
+{
+    return SharedPtr<T>::create(stack_allocator, std::forward<Args>(args)...);
+}
+
 }
