@@ -1,0 +1,39 @@
+version: 2.1
+
+jobs:
+  build-linux-gcc:
+    docker:
+      - image: cimg/base:2023.03
+
+    steps:
+      - checkout
+      - run:
+          name: "Install Cmake"
+          command: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - run:
+          name: "Create build directory"
+          command: mkdir build
+      - run:
+          name: "Build"
+          command: cd build && cmake -GNinja .. && ninja
+  build-linux-clang:
+    docker:
+      - image: cimg/base:2023.03
+
+    steps:
+      - checkout
+      - run:
+          name: "Install Cmake"
+          command: sudo apt-get update && sudo apt-get install -y cmake clang ninja-build
+      - run:
+          name: "Create build directory"
+          command: mkdir build
+      - run:
+          name: "Build"
+          command: cd build && cmake -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
+
+workflows:
+  build-linux-workflow:
+    jobs:
+      - build-linux-gcc
+      - build-linux-clang
