@@ -8,6 +8,7 @@
 #include "Utilities/Logger.hpp"
 #include "Utilities/Time.hpp"
 #include "Utilities/Threading/SpinLock.hpp"
+#include "Utilities/Threading/Thread.hpp"
 #include "Utilities/Allocator.hpp"
 #include "Utilities/List.hpp"
 #include "Utilities/LinkedList.hpp"
