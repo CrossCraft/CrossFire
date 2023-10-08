@@ -29,6 +29,7 @@ struct Reader {
         : context(context)
         , readFn(readFn)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -38,6 +39,7 @@ struct Reader {
      */
     [[nodiscard]] inline virtual auto raw_read(Slice<u8> &buffer) -> usize
     {
+        PROFILE_ZONE;
         return readFn(context, buffer);
     }
 
@@ -49,6 +51,7 @@ struct Reader {
      */
     template <typename T> inline auto read(T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_read(buffer);
     }
@@ -61,6 +64,7 @@ struct Reader {
      */
     template <typename T> inline auto readForeign(T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         usize read = raw_read(buffer);
 
@@ -91,6 +95,7 @@ struct Writer {
         : context(context)
         , writeFn(writeFn)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -101,6 +106,7 @@ struct Writer {
     [[nodiscard]] inline virtual auto raw_write(const Slice<u8> &buffer)
         -> usize
     {
+        PROFILE_ZONE;
         return writeFn(context, buffer);
     }
 
@@ -112,6 +118,7 @@ struct Writer {
      */
     template <typename T> inline auto write(const T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_write(buffer);
     }
@@ -124,6 +131,7 @@ struct Writer {
      */
     template <typename T> inline auto writeForeign(const T &value) -> usize
     {
+        PROFILE_ZONE;
         T temp = value;
         Slice<u8> buffer = Slice<u8>((u8 *)&temp, sizeof(T));
 
@@ -144,6 +152,7 @@ struct Writer {
  */
 template <> inline auto Writer::write(const std::string &value) -> usize
 {
+    PROFILE_ZONE;
     Slice<u8> buffer = Slice<u8>((u8 *)value.c_str(), value.length());
     return raw_write(buffer);
 }
@@ -155,6 +164,7 @@ template <> inline auto Writer::write(const std::string &value) -> usize
  */
 template <> inline auto Writer::write(const cstring &value) -> usize
 {
+    PROFILE_ZONE;
     Slice<u8> buffer = Slice<u8>((u8 *)value, strlen(value));
     return raw_write(buffer);
 }
@@ -176,10 +186,12 @@ struct BufferedReader : Reader {
         , pos(0)
         , len(0)
     {
+        PROFILE_ZONE;
     }
 
     [[nodiscard]] inline auto raw_read(Slice<u8> &buffer) -> usize override
     {
+        PROFILE_ZONE;
         usize read = 0;
 
         if (pos >= len) {
@@ -204,7 +216,7 @@ struct BufferedReader : Reader {
  */
 struct BufferedWriter : Writer {
     Writer writer;
-    static constexpr usize size = 4096;
+    static constexpr usize size = 4096 * 16;
     u8 data[size] = { 0 };
     Slice<u8> buf;
     usize pos;
@@ -214,11 +226,13 @@ struct BufferedWriter : Writer {
         , buf(data, size)
         , pos(0)
     {
+        PROFILE_ZONE;
     }
 
     [[nodiscard]] inline auto raw_write(const Slice<u8> &buffer)
         -> usize override
     {
+        PROFILE_ZONE;
         usize written = 0;
 
         if (pos + buffer.len > size) {
@@ -239,6 +253,7 @@ struct BufferedWriter : Writer {
 
     inline auto flush() -> void
     {
+        PROFILE_ZONE;
         if (pos > 0) {
             (void)writer.raw_write(Slice<u8>(buf.ptr, pos));
             pos = 0;

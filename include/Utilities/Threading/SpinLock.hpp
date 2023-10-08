@@ -13,10 +13,12 @@ public:
     explicit LockGuard(T &lock)
         : lock(lock)
     {
+        PROFILE_ZONE;
         lock.lock();
     }
     ~LockGuard()
     {
+        PROFILE_ZONE;
         lock.unlock();
     }
 
@@ -34,15 +36,18 @@ public:
 
     auto lock() -> void
     {
+        PROFILE_ZONE;
         while (flag.test_and_set(std::memory_order_acquire))
             ;
     }
     auto try_lock() -> bool
     {
+        PROFILE_ZONE;
         return !flag.test_and_set(std::memory_order_acquire);
     }
     auto unlock() -> void
     {
+        PROFILE_ZONE;
         flag.clear(std::memory_order_release);
     }
 

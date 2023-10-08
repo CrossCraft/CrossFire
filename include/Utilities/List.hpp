@@ -21,6 +21,7 @@ public:
         , data(allocator.alloc<T>(8).unwrap())
         , capacity(8)
     {
+        PROFILE_ZONE;
         data.len = 0;
     }
 
@@ -31,6 +32,7 @@ public:
      */
     inline auto push(const T &element) -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         if (data.len == capacity) {
             // Grow the list
             auto new_capacity = capacity * 2;
@@ -61,6 +63,7 @@ public:
      */
     inline auto pop() -> void
     {
+        PROFILE_ZONE;
         data.len -= 1;
     }
 
@@ -69,6 +72,7 @@ public:
      */
     inline auto clear() -> void
     {
+        PROFILE_ZONE;
         data.len = 0;
     }
 
@@ -79,6 +83,7 @@ public:
      */
     inline auto reserve(usize new_capacity) -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         if (new_capacity > capacity) {
             // Reallocate the list
             auto new_data = allocator.reallocate(data, new_capacity);
@@ -98,6 +103,7 @@ public:
      */
     inline auto shrink_to_fit() -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         if (data.len < capacity) {
             // Reallocate the list
             auto new_data = allocator.reallocate(data, data.len);
@@ -119,6 +125,7 @@ public:
      */
     inline auto operator[](usize index) -> T &
     {
+        PROFILE_ZONE;
         return data[index];
     }
 
@@ -128,6 +135,7 @@ public:
      */
     inline auto back() -> T &
     {
+        PROFILE_ZONE;
         return data[data.len - 1];
     }
 
@@ -139,6 +147,7 @@ public:
      */
     ~List()
     {
+        PROFILE_ZONE;
         allocator.dealloc<T>(Slice<T>(data.ptr, capacity));
     }
 };

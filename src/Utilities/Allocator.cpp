@@ -7,6 +7,7 @@ namespace CrossFire
 auto CAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     if (size == 0)
         return AllocationError::InvalidSize;
 
@@ -25,6 +26,7 @@ auto CAllocator::allocate(usize size, usize alignment)
 
 auto CAllocator::deallocate(Slice<u8> ptr) -> void
 {
+    PROFILE_ZONE;
     // MSVC doesn't support aligned_alloc
 #if defined(_MSC_VER)
     _aligned_free(ptr.ptr);
@@ -36,6 +38,7 @@ auto CAllocator::deallocate(Slice<u8> ptr) -> void
 auto CAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     // MSVC doesn't support aligned_alloc
 #if defined(_MSC_VER)
     auto new_ptr = _aligned_realloc(ptr.ptr, size, alignment);
@@ -58,6 +61,7 @@ auto CAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
 LinearAllocator::LinearAllocator(usize size, Allocator &allocator)
     : backing_allocator(allocator)
 {
+    PROFILE_ZONE;
     auto result = allocator.allocate(size);
     memory = result.unwrap();
     offset = 0;
@@ -65,6 +69,7 @@ LinearAllocator::LinearAllocator(usize size, Allocator &allocator)
 
 LinearAllocator::~LinearAllocator()
 {
+    PROFILE_ZONE;
     backing_allocator.deallocate(memory);
     memory = {};
     offset = 0;
@@ -73,6 +78,7 @@ LinearAllocator::~LinearAllocator()
 auto LinearAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     if (size == 0)
         return AllocationError::InvalidSize;
 
@@ -85,6 +91,7 @@ auto LinearAllocator::allocate(usize size, usize alignment)
 }
 auto LinearAllocator::deallocate(Slice<u8> ptr) -> void
 {
+    PROFILE_ZONE;
     // Do nothing
     (void)ptr;
 }
@@ -93,6 +100,7 @@ auto LinearAllocator::reallocate(Slice<u8> ptr, CrossFire::usize size,
                                  CrossFire::usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     (void)size;
     (void)alignment;
 
@@ -103,6 +111,7 @@ auto LinearAllocator::reallocate(Slice<u8> ptr, CrossFire::usize size,
 StackAllocator::StackAllocator(usize size, Allocator &allocator)
     : backing_allocator(allocator)
 {
+    PROFILE_ZONE;
     auto result = allocator.allocate(size);
     memory = result.unwrap();
     offset = 0;
@@ -111,6 +120,7 @@ StackAllocator::StackAllocator(usize size, Allocator &allocator)
 
 StackAllocator::~StackAllocator()
 {
+    PROFILE_ZONE;
     backing_allocator.deallocate(memory);
     memory = {};
     offset = 0;
@@ -120,6 +130,7 @@ StackAllocator::~StackAllocator()
 auto StackAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     if (size == 0)
         return AllocationError::InvalidSize;
 
@@ -132,6 +143,7 @@ auto StackAllocator::allocate(usize size, usize alignment)
 }
 auto StackAllocator::deallocate(Slice<u8> ptr) -> void
 {
+    PROFILE_ZONE;
     if (ptr.ptr == memory.ptr + offset)
         offset = last_offset;
 }
@@ -139,6 +151,7 @@ auto StackAllocator::deallocate(Slice<u8> ptr) -> void
 auto StackAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     if (ptr.ptr == memory.ptr + offset) {
         auto aligned_offset = (last_offset + alignment - 1) & ~(alignment - 1);
         if (aligned_offset + size > memory.len)
@@ -154,6 +167,7 @@ auto StackAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
 auto DebugAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     auto result = backing_allocator.allocate(size, alignment);
     if (result.is_err())
         return result.unwrap_err();
@@ -173,6 +187,7 @@ auto DebugAllocator::allocate(usize size, usize alignment)
 }
 auto DebugAllocator::deallocate(Slice<u8> ptr) -> void
 {
+    PROFILE_ZONE;
     for (usize i = 0; i < ptr.len; i++)
         ptr[i] = 0xDD; // SET TO 0xDD TO DETECT USE AFTER FREE
 
@@ -187,6 +202,7 @@ auto DebugAllocator::deallocate(Slice<u8> ptr) -> void
 auto DebugAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     auto result = backing_allocator.reallocate(ptr, size, alignment);
     if (result.is_err())
         return result.unwrap_err();
@@ -210,6 +226,7 @@ GPAllocator::GPAllocator(usize size, Allocator *allocator)
     , reserved_map()
     , backing_allocator(allocator)
 {
+    PROFILE_ZONE;
     auto result = allocator->allocate(size);
     memory = result.unwrap();
     auto base = (usize)result.unwrap().ptr;
@@ -219,6 +236,7 @@ GPAllocator::GPAllocator(usize size, Allocator *allocator)
 
 GPAllocator::GPAllocator(Slice<CrossFire::u8> memory)
 {
+    PROFILE_ZONE;
     backing_allocator = nullptr;
     this->memory = memory;
     auto base = (usize)memory.ptr;
@@ -228,6 +246,7 @@ GPAllocator::GPAllocator(Slice<CrossFire::u8> memory)
 
 GPAllocator::~GPAllocator()
 {
+    PROFILE_ZONE;
     // Check if backing_allocator is null
     if (backing_allocator != nullptr) {
         backing_allocator->deallocate(memory);
@@ -241,6 +260,7 @@ GPAllocator::~GPAllocator()
 auto GPAllocator::allocate(usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     if (size == 0)
         return AllocationError::InvalidSize;
 
@@ -277,6 +297,7 @@ auto GPAllocator::allocate(usize size, usize alignment)
 }
 auto GPAllocator::deallocate(Slice<u8> ptr) -> void
 {
+    PROFILE_ZONE;
     auto base = (usize)ptr.ptr;
 
     // Find the block in the reserved map
@@ -325,6 +346,7 @@ auto GPAllocator::deallocate(Slice<u8> ptr) -> void
 auto GPAllocator::reallocate(Slice<u8> ptr, usize size, usize alignment)
     -> Result<Slice<u8>, AllocationError>
 {
+    PROFILE_ZONE;
     auto result = allocate(size, alignment);
 
     if (result.is_err())

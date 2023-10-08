@@ -59,6 +59,7 @@ struct Allocator {
     template <typename T, typename... Args>
     [[nodiscard]] auto create(Args &&...args) -> Result<T *, AllocationError>
     {
+        PROFILE_ZONE;
         auto ptr = allocate(sizeof(T), alignof(T));
         if (ptr.is_err())
             return ptr.unwrap_err();
@@ -73,6 +74,7 @@ struct Allocator {
      */
     template <typename T> auto destroy(T *ptr) -> void
     {
+        PROFILE_ZONE;
         ptr->~T();
         deallocate(Slice<u8>((u8 *)ptr, sizeof(T)));
     }
@@ -86,6 +88,7 @@ struct Allocator {
     template <typename T>
     [[nodiscard]] auto alloc(usize count) -> Result<Slice<T>, AllocationError>
     {
+        PROFILE_ZONE;
         auto ptr = allocate(sizeof(T) * count, alignof(T));
         if (ptr.is_err())
             return ptr.unwrap_err();
@@ -104,6 +107,7 @@ struct Allocator {
     [[nodiscard]] auto realloc(Slice<T> ptr, usize count)
         -> Result<Slice<T>, AllocationError>
     {
+        PROFILE_ZONE;
         auto nptr = reallocate(Slice<u8>((u8 *)ptr.ptr, sizeof(T) * ptr.len),
                                sizeof(T) * count, alignof(T));
         if (nptr.is_err())
@@ -119,6 +123,7 @@ struct Allocator {
      */
     template <typename T> auto dealloc(Slice<T> slice) -> void
     {
+        PROFILE_ZONE;
         deallocate(Slice<u8>((u8 *)slice.ptr, sizeof(T) * slice.len));
     }
 };
@@ -208,9 +213,11 @@ public:
     explicit DebugAllocator(Allocator &allocator = c_allocator)
         : backing_allocator(allocator)
     {
+        PROFILE_ZONE;
     }
     ~DebugAllocator() override
     {
+        PROFILE_ZONE;
         if (detect_leaks()) {
             auto &err = Logger::get_stderr();
             err.err("Memory leak detected!");
@@ -238,32 +245,39 @@ public:
 
     inline auto get_alloc_count() const -> usize
     {
+        PROFILE_ZONE;
         return alloc_count;
     }
     inline auto get_dealloc_count() const -> usize
     {
+        PROFILE_ZONE;
         return dealloc_count;
     }
     inline auto get_alloc_size() const -> usize
     {
+        PROFILE_ZONE;
         return alloc_size;
     }
     inline auto get_dealloc_size() const -> usize
     {
+        PROFILE_ZONE;
         return dealloc_size;
     }
 
     auto detect_leaks() -> bool
     {
+        PROFILE_ZONE;
         return alloc_count != dealloc_count || alloc_size != dealloc_size;
     }
 
     auto get_current_usage() const -> usize
     {
+        PROFILE_ZONE;
         return current_usage;
     }
     auto get_peak_usage() const -> usize
     {
+        PROFILE_ZONE;
         return peak_usage;
     }
 };
@@ -283,6 +297,7 @@ class GPAllocator : public Allocator {
             : base(base)
             , size(size)
         {
+            PROFILE_ZONE;
         }
     };
 
@@ -321,10 +336,12 @@ public:
         : ptr(ptr)
         , allocator(allocator)
     {
+        PROFILE_ZONE;
     }
 
     ~UniquePtr()
     {
+        PROFILE_ZONE;
         allocator.destroy(ptr);
     }
 
@@ -334,11 +351,13 @@ public:
     UniquePtr(UniquePtr<T> &&other) noexcept : ptr(other.ptr),
                                                allocator(other.allocator)
     {
+        PROFILE_ZONE;
         other.ptr = nullptr;
     }
 
     inline auto operator=(UniquePtr<T> &&other) noexcept->UniquePtr<T> &
     {
+        PROFILE_ZONE;
         if (this != &other) {
             allocator.destroy(ptr);
             ptr = other.ptr;
@@ -350,27 +369,32 @@ public:
 
     inline auto operator*() const -> T &
     {
+        PROFILE_ZONE;
         return *ptr;
     }
 
     inline auto operator->() const -> T *
     {
+        PROFILE_ZONE;
         return ptr;
     }
 
     inline auto get() const -> T *
     {
+        PROFILE_ZONE;
         return ptr;
     }
 
     inline auto reset(T *new_ptr) -> void
     {
+        PROFILE_ZONE;
         allocator.destroy(ptr);
         ptr = new_ptr;
     }
 
     inline auto swap(UniquePtr<T> &other) noexcept->void
     {
+        PROFILE_ZONE;
         T *tmp = ptr;
         ptr = other.ptr;
         other.ptr = tmp;
@@ -378,6 +402,7 @@ public:
 
     inline auto release() -> T *
     {
+        PROFILE_ZONE;
         T *tmp = ptr;
         ptr = nullptr;
         return tmp;
@@ -394,6 +419,7 @@ public:
     inline static auto create(Allocator &allocator, Args &&...args)
         -> Result<UniquePtr<T>, AllocationError>
     {
+        PROFILE_ZONE;
         auto ptr = allocator.create<T>(std::forward<Args>(args)...);
         if (ptr.is_err())
             return ptr.unwrap_err();
@@ -412,6 +438,7 @@ template <typename T, typename... Args>
 inline auto create_unique_stack(Args &&...args)
     -> Result<UniquePtr<T>, AllocationError>
 {
+    PROFILE_ZONE;
     return UniquePtr<T>::create(stack_allocator, std::forward<Args>(args)...);
 }
 
@@ -430,10 +457,12 @@ public:
         , ref_count(allocator.create<usize>(1).unwrap())
         , allocator(allocator)
     {
+        PROFILE_ZONE;
     }
 
     ~SharedPtr()
     {
+        PROFILE_ZONE;
         if (--(*ref_count) == 0) {
             allocator.destroy(ref_count);
             allocator.destroy(ptr);
@@ -445,11 +474,13 @@ public:
         , ref_count(other.ref_count)
         , allocator(other.allocator)
     {
+        PROFILE_ZONE;
         ++(*ref_count);
     }
 
     inline auto operator=(const SharedPtr<T> &other) -> SharedPtr<T> &
     {
+        PROFILE_ZONE;
         if (this != &other) {
             if (--(*ref_count) == 0) {
                 allocator.destroy(ref_count);
@@ -467,12 +498,14 @@ public:
                                                ref_count(other.ref_count),
                                                allocator(other.allocator)
     {
+        PROFILE_ZONE;
         other.ptr = nullptr;
         other.ref_count = nullptr;
     }
 
     inline auto operator=(SharedPtr<T> &&other) noexcept->SharedPtr<T> &
     {
+        PROFILE_ZONE;
         if (this != &other) {
             if (--(*ref_count) == 0) {
                 allocator.destroy(ref_count);
@@ -489,21 +522,25 @@ public:
 
     inline auto operator*() const -> T &
     {
+        PROFILE_ZONE;
         return *ptr;
     }
 
     inline auto operator->() const -> T *
     {
+        PROFILE_ZONE;
         return ptr;
     }
 
     inline auto get() const -> T *
     {
+        PROFILE_ZONE;
         return ptr;
     }
 
     inline auto reset(T *new_ptr) -> void
     {
+        PROFILE_ZONE;
         if (--(*ref_count) == 0) {
             allocator.destroy(ref_count);
             allocator.destroy(ptr);
@@ -514,6 +551,7 @@ public:
 
     inline auto swap(SharedPtr<T> &other) noexcept->void
     {
+        PROFILE_ZONE;
         T *tmp = ptr;
         ptr = other.ptr;
         other.ptr = tmp;
@@ -533,6 +571,7 @@ public:
     inline static auto create(Allocator &allocator, Args &&...args)
         -> Result<SharedPtr<T>, AllocationError>
     {
+        PROFILE_ZONE;
         auto ptr = allocator.create<T>(std::forward<Args>(args)...);
         if (ptr.is_err())
             return ptr.unwrap_err();
@@ -551,6 +590,7 @@ template <typename T, typename... Args>
 inline auto create_shared_stack(Args &&...args)
     -> Result<SharedPtr<T>, AllocationError>
 {
+    PROFILE_ZONE;
     return SharedPtr<T>::create(stack_allocator, std::forward<Args>(args)...);
 }
 

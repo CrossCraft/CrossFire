@@ -23,6 +23,7 @@ struct Timer {
      */
     Timer()
     {
+        PROFILE_ZONE;
         reset();
     }
 
@@ -31,6 +32,7 @@ struct Timer {
      */
     inline auto update() -> void
     {
+        PROFILE_ZONE;
         current_time = get_time_microseconds();
     }
 
@@ -40,6 +42,7 @@ struct Timer {
      */
     [[nodiscard]] inline auto elapsed() const -> f64
     {
+        PROFILE_ZONE;
         return static_cast<f64>(current_time - start_time) / 1000000.0;
     }
 
@@ -49,6 +52,7 @@ struct Timer {
      */
     [[nodiscard]] inline auto delta() const -> f64
     {
+        PROFILE_ZONE;
         return static_cast<f64>(current_time - last_time) / 1000000.0;
     }
 
@@ -57,6 +61,7 @@ struct Timer {
      */
     inline auto reset() -> void
     {
+        PROFILE_ZONE;
         start_time = get_time_microseconds();
         current_time = start_time;
         last_time = start_time;

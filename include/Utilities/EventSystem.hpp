@@ -27,6 +27,7 @@ struct EventChannel {
 
     EventChannel()
     {
+        PROFILE_ZONE;
         subscribers.fill(nullptr);
     }
 
@@ -36,6 +37,7 @@ struct EventChannel {
      */
     inline auto subscribe(EventSubscriber subscriber) -> void
     {
+        PROFILE_ZONE;
         subscribers[subscriber_count++] = subscriber;
     }
 
@@ -45,6 +47,7 @@ struct EventChannel {
      */
     inline auto publish(Event &event) -> void
     {
+        PROFILE_ZONE;
         for (usize i = 0; i < MAX_SUBSCRIBERS; i++) {
             if (subscribers[i] != nullptr) {
                 subscribers[i](event);
@@ -70,6 +73,7 @@ public:
      */
     inline static auto get() -> EventSystem &
     {
+        PROFILE_ZONE;
         static EventSystem instance;
         return instance;
     }
@@ -81,6 +85,7 @@ public:
      */
     inline auto subscribe(usize channel_id, EventSubscriber subscriber) -> void
     {
+        PROFILE_ZONE;
         if (channels.find(channel_id) == channels.end()) {
             channels[channel_id] = EventChannel();
         }
@@ -95,6 +100,7 @@ public:
      */
     inline auto publish(usize channel_id, Event &event) -> void
     {
+        PROFILE_ZONE;
         if (channels.find(channel_id) == channels.end()) {
             return;
         }

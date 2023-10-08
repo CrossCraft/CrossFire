@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <variant>
+#include "Profiler.hpp"
 
 namespace CrossFire
 {
@@ -51,6 +52,7 @@ template <typename T> struct Slice {
         : ptr(nullptr)
         , len(0)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -62,6 +64,7 @@ template <typename T> struct Slice {
         : ptr(ptr)
         , len(len)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -71,6 +74,7 @@ template <typename T> struct Slice {
      */
     static auto from_string(cstring str) -> Slice<u8>
     {
+        PROFILE_ZONE;
         return Slice<u8>{ (u8 *)str, strlen(str) };
     }
 
@@ -80,6 +84,7 @@ template <typename T> struct Slice {
      */
     auto as_bytes() -> Slice<const u8>
     {
+        PROFILE_ZONE;
         return Slice<const u8>{ (const u8 *)ptr, len * sizeof(T) };
     }
 
@@ -89,6 +94,7 @@ template <typename T> struct Slice {
      */
     auto back() -> T &
     {
+        PROFILE_ZONE;
         cf_assert(len > 0, "Slice is empty");
         return ptr[len - 1];
     }
@@ -103,6 +109,7 @@ template <typename T> struct Slice {
      */
     T &operator[](usize index)
     {
+        PROFILE_ZONE;
         cf_assert(index < len, "Slice index out of range");
         return ptr[index];
     }
@@ -141,12 +148,32 @@ public:
     Result(T value)
         : value(value)
     {
+        PROFILE_ZONE;
     }
 
     // Not explicit to allow implicit return (preferred)
     Result(E value)
         : value(value)
     {
+        PROFILE_ZONE;
+    }
+
+    // Delete copy
+    Result(const Result &other) = delete;
+    auto operator=(const Result &other) -> Result & = delete;
+
+    // Move
+    Result(Result &&other) noexcept
+        : value(std::move(other.value))
+    {
+        PROFILE_ZONE;
+    }
+
+    auto operator=(Result &&other) noexcept -> Result &
+    {
+        PROFILE_ZONE;
+        value = std::move(other.value);
+        return *this;
     }
 
     /**
@@ -155,6 +182,7 @@ public:
      */
     auto is_ok() -> bool
     {
+        PROFILE_ZONE;
         return std::holds_alternative<T>(value);
     }
 
@@ -164,6 +192,7 @@ public:
      */
     auto is_err() -> bool
     {
+        PROFILE_ZONE;
         return std::holds_alternative<E>(value);
     }
 
@@ -173,6 +202,7 @@ public:
      */
     auto unwrap() -> T
     {
+        PROFILE_ZONE;
         cf_assert(is_ok(), "Result is not ok");
 
         return std::get<T>(value);
@@ -184,6 +214,7 @@ public:
      */
     auto unwrap_err() -> E
     {
+        PROFILE_ZONE;
         cf_assert(is_err(), "Result is not err");
 
         return std::get<E>(value);

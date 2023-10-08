@@ -19,10 +19,12 @@ public:
         , tail(nullptr)
         , size(0)
     {
+        PROFILE_ZONE;
     }
 
     ~TailQueue()
     {
+        PROFILE_ZONE;
         clear();
     }
 
@@ -32,6 +34,7 @@ public:
      */
     inline auto get_size() const -> usize
     {
+        PROFILE_ZONE;
         return size;
     }
 
@@ -41,6 +44,7 @@ public:
      */
     [[nodiscard]] auto push(T data) -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         auto res = allocator.create<Node>();
         if (res.is_err())
             return res.unwrap_err();
@@ -69,6 +73,7 @@ public:
      */
     inline auto pop() -> T
     {
+        PROFILE_ZONE;
         if (tail == nullptr)
             return T();
 
@@ -94,6 +99,7 @@ public:
      */
     inline auto clear() -> void
     {
+        PROFILE_ZONE;
         while (tail != nullptr) {
             pop();
         }
@@ -110,6 +116,7 @@ public:
      */
     inline auto get(usize index) -> T &
     {
+        PROFILE_ZONE;
         auto node = head;
         for (usize i = 0; i < index; i++)
             node = node->next;
@@ -124,6 +131,7 @@ public:
      */
     inline auto operator[](usize index) -> T &
     {
+        PROFILE_ZONE;
         return get(index);
     }
 

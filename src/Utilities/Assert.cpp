@@ -6,6 +6,7 @@ namespace CrossFire
 
 auto cf_assert(bool condition, const char *message) -> void
 {
+    PROFILE_ZONE;
 #ifndef NDEBUG
     if (condition)
         return;

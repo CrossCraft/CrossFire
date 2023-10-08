@@ -27,6 +27,7 @@ enum class LogLevel {
  */
 inline auto get_level_string(const LogLevel &lvl) -> const char *
 {
+    PROFILE_ZONE;
     switch (lvl) {
     case LogLevel::Debug:
         return "DEBUG";
@@ -60,6 +61,7 @@ class Logger final {
      */
     inline auto log(LogLevel lvl, const Slice<u8> &buffer) -> void
     {
+        PROFILE_ZONE;
         LockGuard<SpinLock> guard(lock);
 
         if (lvl >= this->level) {
@@ -106,6 +108,7 @@ public:
         : level(level)
         , writer(writer)
     {
+        PROFILE_ZONE;
     }
 
     ~Logger()
@@ -118,6 +121,7 @@ public:
      */
     inline auto flush() -> void
     {
+        PROFILE_ZONE;
         writer.flush();
     }
 
@@ -127,6 +131,7 @@ public:
      */
     inline auto set_level(LogLevel lvl) -> void
     {
+        PROFILE_ZONE;
         level = lvl;
     }
 
@@ -136,6 +141,7 @@ public:
      */
     inline auto set_timestamp(bool stamp) -> void
     {
+        PROFILE_ZONE;
         timestamp = stamp;
     }
 
@@ -145,6 +151,7 @@ public:
      */
     inline auto set_name(const char *log_name) -> void
     {
+        PROFILE_ZONE;
         name = log_name;
     }
 
@@ -154,6 +161,7 @@ public:
      */
     inline static auto get_stdout() -> Logger &
     {
+        PROFILE_ZONE;
         static auto stdout_bwriter =
             BufferedWriter(FileFactory::get_stdout()->writer());
         static auto stdout_logger = Logger(stdout_bwriter);
@@ -166,6 +174,7 @@ public:
      */
     inline static auto get_stderr() -> Logger &
     {
+        PROFILE_ZONE;
         static auto stderr_bwriter =
             BufferedWriter(FileFactory::get_stderr()->writer());
         static auto stderr_logger = Logger(stderr_bwriter);
@@ -178,6 +187,7 @@ public:
      */
     inline auto debug(const char *message) -> void
     {
+        PROFILE_ZONE;
         log(LogLevel::Debug, Slice<u8>::from_string(message));
     }
 
@@ -187,6 +197,7 @@ public:
      */
     inline auto info(const char *message) -> void
     {
+        PROFILE_ZONE;
         log(LogLevel::Info, Slice<u8>::from_string(message));
     }
 
@@ -196,6 +207,7 @@ public:
      */
     inline auto warn(const char *message) -> void
     {
+        PROFILE_ZONE;
         log(LogLevel::Warning, Slice<u8>::from_string(message));
     }
 
@@ -205,6 +217,7 @@ public:
      */
     inline auto err(const char *message) -> void
     {
+        PROFILE_ZONE;
         log(LogLevel::Error, Slice<u8>::from_string(message));
     }
 };
