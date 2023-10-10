@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Application.hpp"
 #include "Utilities/Types.hpp"
 #include "Utilities/Filesystem/File.hpp"
 #include "Utilities/Filesystem/Directory.hpp"

@@ -482,14 +482,16 @@ public:
     {
         PROFILE_ZONE;
         if (this != &other) {
-            if (--(*ref_count) == 0) {
-                allocator.destroy(ref_count);
-                allocator.destroy(ptr);
+            if (ref_count != nullptr) {
+                if (--(*ref_count) == 0) {
+                    allocator.destroy(ref_count);
+                    allocator.destroy(ptr);
+                }
+                ptr = other.ptr;
+                ref_count = other.ref_count;
+                allocator = other.allocator;
+                ++(*ref_count);
             }
-            ptr = other.ptr;
-            ref_count = other.ref_count;
-            allocator = other.allocator;
-            ++(*ref_count);
         }
         return *this;
     }
@@ -547,6 +549,15 @@ public:
         }
         ptr = new_ptr;
         ref_count = allocator.create<usize>(1).unwrap();
+    }
+
+    inline auto release() -> T *
+    {
+        PROFILE_ZONE;
+        T *tmp = ptr;
+        ptr = nullptr;
+        ref_count = nullptr;
+        return tmp;
     }
 
     inline auto swap(SharedPtr<T> &other) noexcept->void

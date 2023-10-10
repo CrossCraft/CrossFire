@@ -106,7 +106,10 @@ public:
         auto write = [](void *context, const Slice<u8> &buffer) -> usize {
             return static_cast<FileBase *>(context)->write(buffer);
         };
-        return { this, write };
+        auto flush = [](void *context) -> void {
+            static_cast<FileBase *>(context)->flush();
+        };
+        return { this, write, flush };
     }
 
 protected:

@@ -4,12 +4,28 @@
 namespace CrossFire
 {
 
+enum class CrossFireEvent : usize { FixedUpdate, Update, Render };
+
 /**
  * @brief Event is a struct that contains an event id and data.
  */
 struct Event {
     usize id;
     void *data;
+
+    Event()
+        : id(0)
+        , data(nullptr)
+    {
+        PROFILE_ZONE;
+    }
+
+    Event(usize id, void *data)
+        : id(id)
+        , data(data)
+    {
+        PROFILE_ZONE;
+    }
 };
 
 /**
@@ -98,14 +114,14 @@ public:
      * @param channel_id The channel id.
      * @param event The event to publish.
      */
-    inline auto publish(usize channel_id, Event &event) -> void
+    inline auto publish(Event &event) -> void
     {
         PROFILE_ZONE;
-        if (channels.find(channel_id) == channels.end()) {
+        if (channels.find(event.id) == channels.end()) {
             return;
         }
 
-        channels[channel_id].publish(event);
+        channels[event.id].publish(event);
     }
 };
 
