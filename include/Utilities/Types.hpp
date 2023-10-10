@@ -163,13 +163,12 @@ public:
     auto operator=(const Result &other) -> Result & = delete;
 
     // Move
-    Result(Result &&other) noexcept
-        : value(std::move(other.value))
+    Result(Result &&other) noexcept : value(std::move(other.value))
     {
         PROFILE_ZONE;
     }
 
-    auto operator=(Result &&other) noexcept -> Result &
+    auto operator=(Result &&other) noexcept->Result &
     {
         PROFILE_ZONE;
         value = std::move(other.value);

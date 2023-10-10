@@ -8,7 +8,8 @@
 /**
  * @brief Sleeps for 100 milliseconds to allow the profiler to attach.
  */
-#define PROFILE_ATTACH std::this_thread::sleep_for(std::chrono::milliseconds(100))
+#define PROFILE_ATTACH \
+    std::this_thread::sleep_for(std::chrono::milliseconds(100))
 #else
 #define PROFILE_ATTACH
 #endif

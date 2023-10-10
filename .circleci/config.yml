@@ -12,7 +12,7 @@ jobs:
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake -GNinja .. && ninja
+          command: cd build && cmake -DCMAKE_BUILD_TYPE=Release -GNinja .. && ninja
   build-linux-clang:
     docker:
       - image: iridescentrose/crosscraft-ci-linux-gcc:latest
@@ -24,7 +24,7 @@ jobs:
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
+          command: cd build && cmake -DCMAKE_BUILD_TYPE=Release -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
 
 workflows:
   build-linux-workflow:
