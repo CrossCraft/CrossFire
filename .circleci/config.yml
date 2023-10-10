@@ -7,6 +7,8 @@ jobs:
 
     steps:
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: "Create build directory"
           command: mkdir build
@@ -19,6 +21,8 @@ jobs:
 
     steps:
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: "Create build directory"
           command: mkdir build

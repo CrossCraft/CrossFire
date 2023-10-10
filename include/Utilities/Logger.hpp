@@ -73,7 +73,7 @@ class Logger final {
                 tm *ltm = localtime(&now);
 
                 // Write time to buffer
-                char time_buffer[32];
+                char time_buffer[256];
                 // Format: MM-DD-YYYY|HH:MM:SS
                 (void)sprintf(time_buffer, timestamp_format, ltm->tm_mon + 1,
                               ltm->tm_mday, ltm->tm_year + 1900, ltm->tm_hour,
