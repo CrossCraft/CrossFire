@@ -73,6 +73,7 @@ class Logger final {
                 tm *ltm = localtime(&now);
 
                 // Write time to buffer
+                // 256 is necessary to prevent buffer overflow (GCC)
                 char time_buffer[256];
                 // Format: MM-DD-YYYY|HH:MM:SS
                 (void)sprintf(time_buffer, timestamp_format, ltm->tm_mon + 1,

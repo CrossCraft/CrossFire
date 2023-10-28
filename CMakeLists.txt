@@ -23,3 +23,9 @@ else()
     add_library(tracy STATIC libs/tracy/public/TracyClient.cpp)
     target_link_libraries(CrossFire PUBLIC tracy)
 endif()
+
+### Define platform specific stuff
+if(WIN32)
+    target_compile_definitions(CrossFire PUBLIC PLATFORM_WINDOWS=1)
+    target_link_libraries(CrossFire PUBLIC opengl32)
+endif()
