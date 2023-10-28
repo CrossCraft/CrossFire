@@ -26,6 +26,12 @@ endif()
 
 ### Define platform specific stuff
 if(WIN32)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    add_subdirectory(libs/glfw)
+
     target_compile_definitions(CrossFire PUBLIC PLATFORM_WINDOWS=1)
-    target_link_libraries(CrossFire PUBLIC opengl32)
+    target_include_directories(CrossFire PUBLIC libs/glfw/include)
+    target_link_libraries(CrossFire PUBLIC glfw opengl32)
 endif()
