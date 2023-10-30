@@ -40,7 +40,7 @@ auto GLFWSurface::init(GraphicsAPI api) -> ResultVoid<PlatformSurfaceError>
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
         break;
-    case GraphicsAPI::Vulkan1_0:
+    case GraphicsAPI::Vulkan1_2:
     case GraphicsAPI::DirectX11:
     case GraphicsAPI::DirectX12:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
