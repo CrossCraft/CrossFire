@@ -3,9 +3,14 @@
 #include "../Utilities/Time.hpp"
 #include "../Utilities/Logger.hpp"
 #include "StateStack.hpp"
+#include <Graphics/PlatformSurface.hpp>
 
 namespace CrossFire
 {
+
+struct ApplicationSettings {
+    GraphicsAPI graphics_api;
+};
 
 struct AppData {
     void *app;
@@ -32,13 +37,14 @@ class Application {
 
 protected:
     StateStack m_state_stack;
+    PlatformSurface *m_surface;
 
 public:
     static isize TARGET_FIXED_UPS;
     static isize TARGET_UPS;
     static isize TARGET_FPS;
 
-    Application(Allocator &allocator);
+    explicit Application(Allocator &allocator);
     virtual ~Application() = default;
 
     virtual auto init() -> void = 0;
@@ -53,7 +59,7 @@ public:
         get()->running = false;
     }
 
-    auto run() -> void;
+    auto run(const ApplicationSettings &settings) -> void;
 };
 
 }

@@ -1,4 +1,5 @@
 #include <CrossFire.hpp>
+
 using namespace CrossFire;
 
 class MyState : public State {
@@ -47,7 +48,7 @@ public:
         Logger::get_stdout().flush();
     }
 
-    auto init() -> void override
+    auto init() -> void
     {
         PROFILE_ZONE;
         Logger::get_stdout().info("MyApplication initialized!");
@@ -56,7 +57,7 @@ public:
         m_state_stack.push(stack_allocator.create<MyState>().unwrap());
     }
 
-    auto deinit() -> void override
+    auto deinit() -> void
     {
         PROFILE_ZONE;
         Logger::get_stdout().info("MyApplication deinitialized!");
@@ -74,7 +75,9 @@ auto main() -> i32
     auto allocator = DebugAllocator(gpa);
 
     auto app = MyApplication(allocator);
-    app.run();
+    ApplicationSettings settings;
+    settings.graphics_api = GraphicsAPI::OpenGL4_1;
+    app.run(settings);
 
     return EXIT_SUCCESS;
 }

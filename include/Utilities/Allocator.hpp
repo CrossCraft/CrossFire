@@ -449,9 +449,10 @@ inline auto create_unique_stack(Args &&...args)
 template <typename T> class SharedPtr {
     T *ptr;
     usize *ref_count;
-    Allocator &allocator;
 
 public:
+    Allocator &allocator;
+
     explicit SharedPtr(T *ptr, Allocator &allocator)
         : ptr(ptr)
         , ref_count(allocator.create<usize>(1).unwrap())
@@ -463,6 +464,12 @@ public:
     ~SharedPtr()
     {
         PROFILE_ZONE;
+        if (ref_count == nullptr)
+            return;
+
+        if (ptr == nullptr)
+            return;
+
         if (--(*ref_count) == 0) {
             allocator.destroy(ref_count);
             allocator.destroy(ptr);
@@ -508,6 +515,12 @@ public:
     inline auto operator=(SharedPtr<T> &&other) noexcept->SharedPtr<T> &
     {
         PROFILE_ZONE;
+        if (ref_count == nullptr)
+            return *this;
+
+        if (ptr == nullptr)
+            return *this;
+
         if (this != &other) {
             if (--(*ref_count) == 0) {
                 allocator.destroy(ref_count);

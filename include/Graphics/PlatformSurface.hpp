@@ -15,23 +15,27 @@ enum class PlatformSurfaceError {
 };
 
 struct PlatformSurface {
-    static auto create(const char* title, int width, int height) -> Result<SharedPtr<PlatformSurface>, PlatformSurfaceError>;
     virtual ~PlatformSurface() = default;
 
-    virtual auto init() -> ResultVoid<PlatformSurfaceError> = 0;
+    virtual auto init(GraphicsAPI api) -> ResultVoid<PlatformSurfaceError> = 0;
     virtual auto deinit() -> void = 0;
 
     virtual auto update() -> void = 0;
     virtual auto render() -> void = 0;
 
-    [[nodiscard]] virtual auto get_width() const -> int = 0;
-    [[nodiscard]] virtual auto get_height() const -> int = 0;
+    virtual auto close_request() -> bool = 0;
 
-    [[nodiscard]] virtual auto get_title() const -> const char* = 0;
+    [[nodiscard]] virtual auto get_width() const -> u32 = 0;
+    [[nodiscard]] virtual auto get_height() const -> u32 = 0;
 
-    [[nodiscard]] auto get_context() const -> void* { return context; }
+    [[nodiscard]] virtual auto get_title() const -> const char * = 0;
 
-    void* context;
+    [[nodiscard]] auto get_context() const -> void *
+    {
+        return context;
+    }
+
+    void *context = nullptr;
 };
 
 }

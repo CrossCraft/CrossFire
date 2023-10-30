@@ -1,4 +1,7 @@
 #include <Core/Application.hpp>
+#if PLATFORM_WINDOWS || PLATFORM_POSIX
+#include <Graphics/Surface/GLFWSurface.hpp>
+#endif
 
 namespace CrossFire
 {
@@ -11,6 +14,7 @@ isize Application::TARGET_FPS = -1;
 
 Application::Application(Allocator &allocator)
     : m_state_stack(allocator)
+    , m_surface(nullptr)
 {
     PROFILE_ZONE;
     cf_assert(!s_instance, "Application already exists!");
@@ -18,9 +22,18 @@ Application::Application(Allocator &allocator)
     Logger::get_stdout().info("Application created!");
 }
 
-auto Application::run() -> void
+auto Application::run(const ApplicationSettings &settings) -> void
 {
     PROFILE_ZONE;
+    // Create surface
+
+#if PLATFORM_WINDOWS || PLATFORM_POSIX
+    m_surface =
+        stack_allocator.create<GLFWSurface>("CrossFire", 1280, 720).unwrap();
+    m_surface->init(settings.graphics_api);
+#else
+    cf_assert(false, "No surface implementation for this platform!");
+#endif
 
     // Call initialization functions.
     init();
@@ -75,6 +88,13 @@ auto Application::run() -> void
 
         if (u_time > u_max) {
             // Update
+            m_surface->update();
+
+            if (m_surface->close_request()) {
+                running = false;
+                continue;
+            }
+
             AppData data = { this, u_time };
             AppEvent event(CrossFireEvent::Update, &data);
             EventSystem::get().publish(event);
@@ -88,8 +108,11 @@ auto Application::run() -> void
             EventSystem::get().publish(event);
             renderer_timer.reset();
 
+            m_surface->render();
+
             running_frames += r_time;
             fps++;
+            //            FrameMark;
         }
 
         if (running_frames > 1.0) {
@@ -101,7 +124,9 @@ auto Application::run() -> void
     }
 
     // Call cleanup functions.
+    m_surface->deinit();
     deinit();
+    exit(0);
 }
 
 }
