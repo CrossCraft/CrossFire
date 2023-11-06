@@ -3,34 +3,32 @@ version: 2.1
 jobs:
   build-linux-gcc:
     docker:
-      - image: cimg/base:2023.03
+      - image: iridescentrose/crosscraft-ci-linux-gcc:latest
 
     steps:
       - checkout
-      - run:
-          name: "Install Cmake"
-          command: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: "Create build directory"
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake -GNinja .. && ninja
+          command: cd build && cmake -DCMAKE_BUILD_TYPE=Release -GNinja .. && ninja
   build-linux-clang:
     docker:
-      - image: cimg/base:2023.03
+      - image: iridescentrose/crosscraft-ci-linux-gcc:latest
 
     steps:
       - checkout
-      - run:
-          name: "Install Cmake"
-          command: sudo apt-get update && sudo apt-get install -y cmake clang ninja-build
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: "Create build directory"
           command: mkdir build
       - run:
           name: "Build"
-          command: cd build && cmake -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
+          command: cd build && cmake -DCMAKE_BUILD_TYPE=Release -GNinja ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && ninja
 
 workflows:
   build-linux-workflow:

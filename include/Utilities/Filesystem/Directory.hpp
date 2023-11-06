@@ -20,6 +20,7 @@ public:
     explicit DirectoryBase(const char *path)
         : path(path)
     {
+        PROFILE_ZONE;
         (void)this->path;
     };
     virtual ~DirectoryBase() = default;
@@ -33,6 +34,7 @@ public:
     inline virtual auto open_file(const char *name, const char *mode)
         -> UniquePtr<FileBase>
     {
+        PROFILE_ZONE;
         (void)name;
         (void)mode;
         cf_assert(false, "Unimplemented base function called.");
@@ -46,6 +48,7 @@ public:
      */
     inline virtual auto open_directory(const char *name) -> DirectoryBase
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
         return DirectoryBase("");
@@ -60,6 +63,7 @@ public:
     virtual auto create_file(const char *name, const char *mode)
         -> UniquePtr<FileBase>
     {
+        PROFILE_ZONE;
         (void)name;
         (void)mode;
         cf_assert(false, "Unimplemented base function called.");
@@ -72,6 +76,7 @@ public:
      */
     virtual auto delete_file(const char *name) -> void
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
     }
@@ -83,6 +88,7 @@ public:
      */
     virtual auto exists(const char *name) -> bool
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
         return false;
@@ -95,6 +101,7 @@ public:
      */
     virtual auto is_directory(const char *name) -> bool
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
         return false;
@@ -106,6 +113,7 @@ public:
      */
     virtual auto create_directory(const char *name) -> void
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
     }
@@ -116,6 +124,7 @@ public:
      */
     virtual auto delete_directory(const char *name) -> void
     {
+        PROFILE_ZONE;
         (void)name;
         cf_assert(false, "Unimplemented base function called.");
     }

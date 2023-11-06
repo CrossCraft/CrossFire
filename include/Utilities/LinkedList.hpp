@@ -24,6 +24,7 @@ public:
             : data(data)
             , next(nullptr)
         {
+            PROFILE_ZONE;
         }
     };
 
@@ -37,10 +38,12 @@ public:
         , tail(nullptr)
         , size(0)
     {
+        PROFILE_ZONE;
     }
 
     ~LinkedList()
     {
+        PROFILE_ZONE;
         clear();
     }
 
@@ -50,6 +53,7 @@ public:
      */
     inline auto get_size() const -> usize
     {
+        PROFILE_ZONE;
         return size;
     }
 
@@ -60,6 +64,7 @@ public:
      */
     inline auto push_back(const T &data) -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         auto res = allocator.create<Node>(data);
         if (res.is_err())
             return res.unwrap_err();
@@ -85,6 +90,7 @@ public:
      */
     auto push_front(const T &data) -> ResultVoid<AllocationError>
     {
+        PROFILE_ZONE;
         auto res = allocator.create<Node>(data);
         if (res.is_err())
             return res.unwrap_err();
@@ -108,6 +114,7 @@ public:
      */
     auto pop_back() -> void
     {
+        PROFILE_ZONE;
         if (head == nullptr)
             return;
 
@@ -133,6 +140,7 @@ public:
      */
     auto pop_front() -> void
     {
+        PROFILE_ZONE;
         if (head == nullptr)
             return;
 
@@ -154,6 +162,7 @@ public:
      */
     auto clear() -> void
     {
+        PROFILE_ZONE;
         while (head != nullptr)
             pop_front();
     }
@@ -165,6 +174,7 @@ public:
      */
     auto get(usize index) -> T &
     {
+        PROFILE_ZONE;
         auto node = head;
         for (usize i = 0; i < index; i++)
             node = node->next;
@@ -179,6 +189,7 @@ public:
      */
     auto operator[](usize index) -> T &
     {
+        PROFILE_ZONE;
         return get(index);
     }
 

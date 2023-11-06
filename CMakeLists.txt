@@ -9,6 +9,35 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(CrossFire ${HEADERS} ${SOURCES})
-target_include_directories(CrossFire PUBLIC include)
-target_compile_definitions(CrossFire PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(CrossFire PUBLIC _CRT_SECURE_NO_WARNINGS)
 target_compile_options(CrossFire PRIVATE -Wall -Wextra -Werror)
+target_include_directories(CrossFire PUBLIC include libs/tracy/public)
+
+### Tracy profiler
+
+# Only enable tracy if we are in debug mode or relwithdebinfo
+if(NOT CMAKE_BUILD_TYPE MATCHES "Debug|RelWithDebInfo")
+    message(STATUS "Tracy profiler disabled because we are not in debug mode")
+else()
+    add_compile_definitions(TRACY_ENABLE=1 TRACY_ON_DEMAND=1)
+    add_library(tracy STATIC libs/tracy/public/TracyClient.cpp)
+    target_link_libraries(CrossFire PUBLIC tracy)
+endif()
+
+### Define platform specific stuff
+if(WIN32)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    add_subdirectory(libs/glfw)
+
+    target_compile_definitions(CrossFire PUBLIC PLATFORM_WINDOWS=1)
+    target_include_directories(CrossFire PUBLIC libs/glfw/include)
+    target_link_libraries(CrossFire PUBLIC glfw opengl32)
+else()
+    add_subdirectory(libs/glfw)
+
+    target_compile_definitions(CrossFire PUBLIC PLATFORM_POSIX=1)
+    target_include_directories(CrossFire PUBLIC libs/glfw/include)
+    target_link_libraries(CrossFire PUBLIC glfw GL)
+endif()

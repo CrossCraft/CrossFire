@@ -10,6 +10,8 @@ namespace CrossFire
 typedef usize (*ReadFn)(void *ctx, Slice<u8> &buffer);
 // Function pointer write
 typedef usize (*WriteFn)(void *ctx, const Slice<u8> &buffer);
+// Function pointer flush
+typedef void (*FlushFn)(void *ctx);
 
 /**
  * @brief The Reader class is an interface for reader objects.
@@ -29,6 +31,7 @@ struct Reader {
         : context(context)
         , readFn(readFn)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -38,6 +41,7 @@ struct Reader {
      */
     [[nodiscard]] inline virtual auto raw_read(Slice<u8> &buffer) -> usize
     {
+        PROFILE_ZONE;
         return readFn(context, buffer);
     }
 
@@ -49,6 +53,7 @@ struct Reader {
      */
     template <typename T> inline auto read(T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_read(buffer);
     }
@@ -61,6 +66,7 @@ struct Reader {
      */
     template <typename T> inline auto readForeign(T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         usize read = raw_read(buffer);
 
@@ -80,17 +86,21 @@ struct Reader {
 struct Writer {
     void *context = nullptr;
     WriteFn writeFn = nullptr;
+    FlushFn flushFn = nullptr;
 
     Writer() = default;
     /**
      * @brief Construct a new Writer object.
      * @param context The context pointer
      * @param writeFn The write function pointer
+     * @param flushFn The flush function pointer
      */
-    Writer(void *context, WriteFn writeFn)
+    Writer(void *context, WriteFn writeFn, FlushFn flushFn)
         : context(context)
         , writeFn(writeFn)
+        , flushFn(flushFn)
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -101,6 +111,7 @@ struct Writer {
     [[nodiscard]] inline virtual auto raw_write(const Slice<u8> &buffer)
         -> usize
     {
+        PROFILE_ZONE;
         return writeFn(context, buffer);
     }
 
@@ -112,6 +123,7 @@ struct Writer {
      */
     template <typename T> inline auto write(const T &value) -> usize
     {
+        PROFILE_ZONE;
         Slice<u8> buffer = Slice<u8>((u8 *)&value, sizeof(T));
         return raw_write(buffer);
     }
@@ -124,6 +136,7 @@ struct Writer {
      */
     template <typename T> inline auto writeForeign(const T &value) -> usize
     {
+        PROFILE_ZONE;
         T temp = value;
         Slice<u8> buffer = Slice<u8>((u8 *)&temp, sizeof(T));
 
@@ -135,6 +148,15 @@ struct Writer {
 
         return raw_write(buffer);
     }
+
+    /**
+     * @brief Flush the writer.
+     */
+    virtual inline auto flush() -> void
+    {
+        PROFILE_ZONE;
+        flushFn(context);
+    }
 };
 
 /**
@@ -144,6 +166,7 @@ struct Writer {
  */
 template <> inline auto Writer::write(const std::string &value) -> usize
 {
+    PROFILE_ZONE;
     Slice<u8> buffer = Slice<u8>((u8 *)value.c_str(), value.length());
     return raw_write(buffer);
 }
@@ -155,6 +178,7 @@ template <> inline auto Writer::write(const std::string &value) -> usize
  */
 template <> inline auto Writer::write(const cstring &value) -> usize
 {
+    PROFILE_ZONE;
     Slice<u8> buffer = Slice<u8>((u8 *)value, strlen(value));
     return raw_write(buffer);
 }
@@ -176,10 +200,12 @@ struct BufferedReader : Reader {
         , pos(0)
         , len(0)
     {
+        PROFILE_ZONE;
     }
 
     [[nodiscard]] inline auto raw_read(Slice<u8> &buffer) -> usize override
     {
+        PROFILE_ZONE;
         usize read = 0;
 
         if (pos >= len) {
@@ -204,7 +230,7 @@ struct BufferedReader : Reader {
  */
 struct BufferedWriter : Writer {
     Writer writer;
-    static constexpr usize size = 4096;
+    static constexpr usize size = 4096 * 16;
     u8 data[size] = { 0 };
     Slice<u8> buf;
     usize pos;
@@ -214,11 +240,13 @@ struct BufferedWriter : Writer {
         , buf(data, size)
         , pos(0)
     {
+        PROFILE_ZONE;
     }
 
     [[nodiscard]] inline auto raw_write(const Slice<u8> &buffer)
         -> usize override
     {
+        PROFILE_ZONE;
         usize written = 0;
 
         if (pos + buffer.len > size) {
@@ -237,12 +265,12 @@ struct BufferedWriter : Writer {
         return written;
     }
 
-    inline auto flush() -> void
+    inline auto flush() -> void override
     {
-        if (pos > 0) {
-            (void)writer.raw_write(Slice<u8>(buf.ptr, pos));
-            pos = 0;
-        }
+        PROFILE_ZONE;
+        (void)writer.raw_write(Slice<u8>(buf.ptr, pos));
+        writer.flush();
+        pos = 0;
     }
 };
 

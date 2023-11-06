@@ -19,6 +19,7 @@ public:
      */
     FileBase(const char *filename, const char *mode)
     {
+        PROFILE_ZONE;
         (void)filename;
         (void)mode;
     };
@@ -31,6 +32,7 @@ public:
      */
     virtual auto read(Slice<u8> &buffer) -> usize
     {
+        PROFILE_ZONE;
         (void)buffer;
         assert(false && "Unimplemented base function called.");
         return -1;
@@ -43,6 +45,7 @@ public:
      */
     virtual auto write(const Slice<u8> &buffer) -> usize
     {
+        PROFILE_ZONE;
         (void)buffer;
         assert(false && "Unimplemented base function called.");
         return -1;
@@ -54,6 +57,7 @@ public:
      */
     virtual auto size() -> isize
     {
+        PROFILE_ZONE;
         assert(false && "Unimplemented base function called.");
         return -1;
     }
@@ -64,6 +68,7 @@ public:
      */
     virtual auto flush() -> void
     {
+        PROFILE_ZONE;
         assert(false && "Unimplemented base function called.");
     }
 
@@ -73,6 +78,7 @@ public:
      */
     virtual auto close() -> void
     {
+        PROFILE_ZONE;
         assert(false && "Unimplemented base function called.");
     }
 
@@ -82,6 +88,7 @@ public:
      */
     auto reader() -> Reader
     {
+        PROFILE_ZONE;
         auto read = [](void *context, Slice<u8> &buffer) -> usize {
             return static_cast<FileBase *>(context)->read(buffer);
         };
@@ -95,10 +102,14 @@ public:
      */
     auto writer() -> Writer
     {
+        PROFILE_ZONE;
         auto write = [](void *context, const Slice<u8> &buffer) -> usize {
             return static_cast<FileBase *>(context)->write(buffer);
         };
-        return { this, write };
+        auto flush = [](void *context) -> void {
+            static_cast<FileBase *>(context)->flush();
+        };
+        return { this, write, flush };
     }
 
 protected:

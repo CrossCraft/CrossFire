@@ -31,6 +31,7 @@ public:
     explicit Thread(F &&f)
         : function(std::forward<F>(f))
     {
+        PROFILE_ZONE;
     }
 
     /**
@@ -40,6 +41,7 @@ public:
      */
     template <typename... Args> auto start(Args &&...args) -> void
     {
+        PROFILE_ZONE;
         std::tuple<> args_tuple = std::make_tuple(std::forward<Args>(args)...);
         thread = std::thread(
             [this, args_tuple]() { std::apply(function, args_tuple); });
@@ -50,6 +52,7 @@ public:
      */
     auto join() -> void
     {
+        PROFILE_ZONE;
         thread.join();
     }
 };
@@ -59,6 +62,7 @@ public:
     explicit ThreadPool(size_t numThreads)
         : stop(false)
     {
+        PROFILE_ZONE;
         for (size_t i = 0; i < numThreads; ++i) {
             workers.emplace_back([this] {
                 for (;;) {
@@ -83,6 +87,7 @@ public:
     auto enqueue(F &&f, Args &&...args)
         -> std::future<typename std::result_of<F(Args...)>::type>
     {
+        PROFILE_ZONE;
         using return_type = typename std::result_of<F(Args...)>::type;
         auto task = std::make_shared<std::packaged_task<return_type()> >(
             std::bind(std::forward<F>(f), std::forward<Args>(args)...));
@@ -99,6 +104,7 @@ public:
 
     ~ThreadPool()
     {
+        PROFILE_ZONE;
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             stop = true;

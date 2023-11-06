@@ -1,0 +1,6 @@
+[submodule "libs/tracy"]
+	path = libs/tracy
+	url = https://github.com/wolfpld/tracy
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = git@github.com:glfw/glfw.git
